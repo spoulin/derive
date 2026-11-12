@@ -100,7 +100,7 @@ enum Bandcamp {
     }
 
     /// Extracts and HTML-unescapes the value of a double-quoted attribute.
-    private static func attribute(_ name: String, in html: String) -> String? {
+    static func attribute(_ name: String, in html: String) -> String? {
         guard let start = html.range(of: "\(name)=\"") else { return nil }
         let rest = html[start.upperBound...]
         guard let end = rest.firstIndex(of: "\"") else { return nil }

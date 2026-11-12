@@ -4,7 +4,11 @@ import SwiftUI
 /// sonnov:// still works, from when the app was called Sonnov.
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
-        Task { @MainActor in PlayerWindow.restore() }
+        Task { @MainActor in
+            PlayerWindow.restore()
+            // Picks up artists followed or unfollowed on Bandcamp since the last launch.
+            await ArtistStore.shared.refresh()
+        }
     }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
@@ -24,9 +28,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 case "next": player.nextTrack()
                 case "shuffle": player.nextAlbum()
                 case "window": PlayerWindow.show()
+                case "artists":
+                    PlayerWindow.show()
+                    PlayerWindow.toggleArtists()
                 case "radio": player.radio = true
                 case "album": player.radio = false
                 case "dislike": player.dislikeCurrent()
+                case "artist":
+                    // derive://artist?url=name.bandcamp.com plays that artist, listed or not.
+                    let value = URLComponents(url: url, resolvingAgainstBaseURL: false)?
+                        .queryItems?.first { $0.name == "url" }?.value ?? ""
+                    guard let site = ArtistStore.siteURL(from: value) else { break }
+                    let artist = ArtistStore.shared.artists.first { $0.url.host == site.host }
+                        ?? Artist(url: site, name: site.host ?? value)
+                    player.playArtist(artist)
                 default: break
                 }
             }
