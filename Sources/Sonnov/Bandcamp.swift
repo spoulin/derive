@@ -79,7 +79,7 @@ enum Bandcamp {
             }
         let current = root["current"] as? [String: Any]
         let art = (root["art_id"] as? NSNumber).flatMap {
-            URL(string: "https://f4.bcbits.com/img/a\($0)_16.jpg")
+            URL(string: "https://f4.bcbits.com/img/a\($0)_10.jpg")
         }
         return Album(title: current?["title"] as? String ?? "", artURL: art, pageURL: url, tracks: tracks)
     }

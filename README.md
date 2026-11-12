@@ -12,6 +12,7 @@ choose, and plays its tracks in order. It starts with
 - Your own list of Bandcamp artists and labels, each one turned on or off
 - Every artist that is turned on has the same chance, whatever the size of their catalog
 - Album cover and current track
+- A player window that stays open, with a large cover, to keep on your desktop
 - Play/pause, next track, and shuffle (new random album)
 - Open the current album on Bandcamp
 
@@ -33,6 +34,16 @@ artist off to skip them without removing them.
 To pick an album, the app first picks one of the artists that are turned on, each with the same
 chance, then picks one of that artist's albums at random.
 
+## Player window
+
+The menu bar window closes when you click elsewhere. To keep the player on screen, click the pin
+on the cover: the player opens in its own window. Resize it to make the cover bigger. Check
+**On top** to keep it above other apps.
+
+The window takes the main color of the cover, and the next cover fades in over the previous one.
+
+The window keeps its place and size, and comes back at launch if it was open when you quit.
+
 ## Remote control (Stream Deck, scripts)
 
 The app handles `sonnov://` URLs while it is running:
@@ -44,6 +55,7 @@ The app handles `sonnov://` URLs while it is running:
 | `sonnov://pause` | Pause |
 | `sonnov://next` | Next track |
 | `sonnov://shuffle` | New random album |
+| `sonnov://window` | Open the player window |
 
 From a terminal: `open -g sonnov://toggle` (`-g` keeps the app in the background).
 

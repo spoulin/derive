@@ -1,5 +1,5 @@
+import AppKit
 import AVFoundation
-import Foundation
 
 @MainActor
 final class Player: ObservableObject {
@@ -7,7 +7,12 @@ final class Player: ObservableObject {
     @Published private(set) var isLoading = false
     @Published private(set) var nowPlaying: String?
     @Published private(set) var artist: String?
-    @Published private(set) var artURL: URL?
+    /// The cover on screen. Replaced only once the next one has downloaded, so views can crossfade.
+    @Published private(set) var cover: NSImage?
+    /// Changes with every new cover, to drive the crossfade.
+    @Published private(set) var coverID = 0
+    /// Dark tint taken from the cover, for the player window's background.
+    @Published private(set) var tint = CoverColor.neutral
     @Published private(set) var pageURL: URL?
     @Published private(set) var errorMessage: String?
 
@@ -17,6 +22,7 @@ final class Player: ObservableObject {
     private var album: Album?
     private var index = 0
     private var endObserver: NSObjectProtocol?
+    private var artURL: URL?
     /// Release lists per artist site, read once per launch.
     private var sites: [URL: Site] = [:]
 
@@ -98,7 +104,10 @@ final class Player: ObservableObject {
     private func playCurrent() {
         guard let album, index < album.tracks.count else { return }
         let track = album.tracks[index]
-        artURL = album.artURL
+        if album.artURL != artURL {
+            artURL = album.artURL
+            loadCover(album.artURL)
+        }
         pageURL = album.pageURL
         nowPlaying = "\(album.title) — \(index + 1). \(track.title)"
         player.replaceCurrentItem(with: AVPlayerItem(url: track.url))
@@ -120,6 +129,24 @@ final class Player: ObservableObject {
             artist = nil
             artURL = nil
             pageURL = nil
+            showCover(nil)
         }
+    }
+
+    private func loadCover(_ url: URL?) {
+        guard let url else { return showCover(nil) }
+        Task {
+            guard let (data, _) = try? await URLSession.shared.data(from: url),
+                  let image = NSImage(data: data),
+                  artURL == url // Another album started while this cover was downloading.
+            else { return }
+            showCover(image)
+        }
+    }
+
+    private func showCover(_ image: NSImage?) {
+        cover = image
+        tint = image.map(CoverColor.tint) ?? CoverColor.neutral
+        coverID += 1
     }
 }
