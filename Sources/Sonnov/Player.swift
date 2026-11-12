@@ -6,9 +6,10 @@ final class Player: ObservableObject {
     @Published private(set) var isPlaying = false
     @Published private(set) var isLoading = false
     @Published private(set) var nowPlaying: String?
+    @Published private(set) var artist: String?
     @Published private(set) var artURL: URL?
     @Published private(set) var pageURL: URL?
-    @Published private(set) var failed = false
+    @Published private(set) var errorMessage: String?
 
     static let shared = Player()
 
@@ -16,6 +17,8 @@ final class Player: ObservableObject {
     private var album: Album?
     private var index = 0
     private var endObserver: NSObjectProtocol?
+    /// Release lists per artist site, read once per launch.
+    private var sites: [URL: Site] = [:]
 
     init() {
         endObserver = NotificationCenter.default.addObserver(
@@ -53,15 +56,43 @@ final class Player: ObservableObject {
     private func startRandomAlbum() async {
         guard !isLoading else { return }
         isLoading = true
-        failed = false
+        errorMessage = nil
         defer { isLoading = false }
-        do {
-            album = try await Bandcamp.randomAlbum()
+        let artists = ArtistStore.shared.enabled
+        guard !artists.isEmpty else {
+            errorMessage = "No artist is turned on"
+            return
+        }
+        if let (picked, from) = await randomAlbum(from: artists) {
+            album = picked
+            artist = from.name
             index = 0
             playCurrent()
-        } catch {
-            failed = true
+        } else {
+            errorMessage = "Couldn't reach Bandcamp"
         }
+    }
+
+    /// Every artist has the same chance, whatever the size of their catalog.
+    /// When the picked artist fails, falls back to another one.
+    private func randomAlbum(from artists: [Artist]) async -> (Album, Artist)? {
+        for artist in artists.shuffled().prefix(3) {
+            guard let site = await site(for: artist) else { continue }
+            // A few releases may have no streamable tracks; try a handful of picks.
+            for release in site.releases.shuffled().prefix(5) {
+                if let album = try? await Bandcamp.album(at: release), !album.tracks.isEmpty {
+                    return (album, artist)
+                }
+            }
+        }
+        return nil
+    }
+
+    private func site(for artist: Artist) async -> Site? {
+        if let site = sites[artist.url] { return site }
+        let site = try? await Bandcamp.site(at: artist.url)
+        sites[artist.url] = site
+        return site
     }
 
     private func playCurrent() {
@@ -86,6 +117,7 @@ final class Player: ObservableObject {
             player.replaceCurrentItem(with: nil)
             isPlaying = false
             nowPlaying = nil
+            artist = nil
             artURL = nil
             pageURL = nil
         }

@@ -60,8 +60,8 @@ struct SonnovApp: App {
                 Group {
                     if player.isLoading {
                         Text("Loading…")
-                    } else if player.failed {
-                        Text("Couldn't reach Bandcamp").foregroundStyle(.red)
+                    } else if let error = player.errorMessage {
+                        Text(error).foregroundStyle(.red)
                     } else {
                         Text(player.nowPlaying ?? " ")
                     }
@@ -70,12 +70,19 @@ struct SonnovApp: App {
                 .multilineTextAlignment(.center)
                 .lineLimit(2, reservesSpace: true)
 
+                Text(player.isLoading ? " " : player.artist ?? " ")
+                    .font(.caption.weight(.semibold))
+                    .lineLimit(1)
+
                 Divider()
                 HStack {
-                    Button("Open on Bandcamp") {
+                    Button("Bandcamp") {
                         if let url = player.pageURL { NSWorkspace.shared.open(url) }
                     }
                     .disabled(player.pageURL == nil)
+                    .help("Open the current album on Bandcamp")
+                    Spacer()
+                    Button("Artists…") { ArtistsWindow.show() }
                     Spacer()
                     Button("Quit") { NSApplication.shared.terminate(nil) }
                 }

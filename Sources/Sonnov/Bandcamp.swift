@@ -12,38 +12,60 @@ struct Album {
     let tracks: [Track]
 }
 
+/// An artist (or label) site and the release pages it lists.
+struct Site {
+    let name: String
+    let releases: [URL]
+}
+
 enum BandcampError: Error {
     case parse
     case noAlbums
 }
 
 enum Bandcamp {
-    static let base = URL(string: "https://sonnovdrone.bandcamp.com")!
-
-    static func randomAlbum() async throws -> Album {
-        let page = try await fetch(base.appendingPathComponent("music"))
-        let paths = try albumPaths(in: page)
-        // A few albums may have no streamable tracks; try a handful of picks.
-        for path in paths.shuffled().prefix(5) {
-            let url = URL(string: path, relativeTo: base)!.absoluteURL
-            if let album = try? await album(at: url), !album.tracks.isEmpty {
-                return album
-            }
+    /// Reads the /music page of a site. Albums come first; tracks only when there are no albums.
+    static func site(at root: URL) async throws -> Site {
+        let (page, finalURL) = try await fetch(root.appendingPathComponent("music"))
+        let name = metaContent("og:site_name", in: page) ?? root.host ?? root.absoluteString
+        var albums: [String] = []
+        var tracks: [String] = []
+        // The first items are only in the HTML grid; the rest are only in data-client-items.
+        for (type, path) in gridItems(in: page) + clientItems(in: page) {
+            if type == "album" { albums.append(path) } else if type == "track" { tracks.append(path) }
         }
-        throw BandcampError.noAlbums
+        var releases = Array(Set(albums.isEmpty ? tracks : albums))
+            .compactMap { URL(string: $0, relativeTo: finalURL)?.absoluteURL }
+        // A site with a single release redirects /music to that release.
+        if releases.isEmpty, attribute("data-tralbum", in: page) != nil {
+            releases = [finalURL]
+        }
+        guard !releases.isEmpty else { throw BandcampError.noAlbums }
+        return Site(name: name, releases: releases)
     }
 
-    private static func albumPaths(in page: String) throws -> [String] {
+    private static func gridItems(in page: String) -> [(String, String)] {
+        let regex = try! NSRegularExpression(
+            pattern: #"data-item-id="(album|track)-\d+"[^>]*>\s*<a href="([^"]+)""#)
+        let ns = page as NSString
+        return regex.matches(in: page, range: NSRange(location: 0, length: ns.length)).map {
+            (ns.substring(with: $0.range(at: 1)), unescape(ns.substring(with: $0.range(at: 2))))
+        }
+    }
+
+    private static func clientItems(in page: String) -> [(String, String)] {
         guard let json = attribute("data-client-items", in: page),
-              let items = try JSONSerialization.jsonObject(with: Data(json.utf8)) as? [[String: Any]]
-        else { throw BandcampError.parse }
+              let items = try? JSONSerialization.jsonObject(with: Data(json.utf8)) as? [[String: Any]]
+        else { return [] }
         return items.compactMap { item in
-            item["type"] as? String == "album" ? item["page_url"] as? String : nil
+            guard let type = item["type"] as? String, let path = item["page_url"] as? String
+            else { return nil }
+            return (type, path)
         }
     }
 
-    private static func album(at url: URL) async throws -> Album {
-        let page = try await fetch(url)
+    static func album(at url: URL) async throws -> Album {
+        let (page, _) = try await fetch(url)
         guard let json = attribute("data-tralbum", in: page),
               let root = try JSONSerialization.jsonObject(with: Data(json.utf8)) as? [String: Any],
               let infos = root["trackinfo"] as? [[String: Any]]
@@ -62,9 +84,16 @@ enum Bandcamp {
         return Album(title: current?["title"] as? String ?? "", artURL: art, pageURL: url, tracks: tracks)
     }
 
-    private static func fetch(_ url: URL) async throws -> String {
-        let (data, _) = try await URLSession.shared.data(from: url)
-        return String(decoding: data, as: UTF8.self)
+    private static func fetch(_ url: URL) async throws -> (String, URL) {
+        let (data, response) = try await URLSession.shared.data(from: url)
+        return (String(decoding: data, as: UTF8.self), response.url ?? url)
+    }
+
+    private static func metaContent(_ property: String, in html: String) -> String? {
+        guard let tag = html.range(of: "property=\"\(property)\"") else { return nil }
+        let rest = String(html[tag.upperBound...].prefix(500))
+        guard let value = attribute("content", in: rest), !value.isEmpty else { return nil }
+        return value
     }
 
     /// Extracts and HTML-unescapes the value of a double-quoted attribute.
