@@ -70,22 +70,26 @@ struct PlayerView: View {
     }
 
     private var cover: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 6).fill(.quaternary)
-            if let cover = player.cover {
-                // A new id per cover: the old image fades out while the new one fades in.
-                Image(nsImage: cover).resizable().scaledToFill()
-                    .id(player.coverID)
-                    .transition(.opacity)
+        // The square sets the size; the image is laid over it and clipped to it, so a cover
+        // that isn't square can't spill out of its frame.
+        RoundedRectangle(cornerRadius: 6).fill(.quaternary)
+            .aspectRatio(1, contentMode: .fit)
+            .overlay {
+                ZStack {
+                    if let cover = player.cover {
+                        // A new id per cover: the old image fades out while the new one fades in.
+                        Image(nsImage: cover).resizable().scaledToFill()
+                            .id(player.coverID)
+                            .transition(.opacity)
+                    }
+                }
+                .animation(.easeInOut(duration: 1), value: player.coverID)
             }
-        }
-        .animation(.easeInOut(duration: 1), value: player.coverID)
-        .aspectRatio(1, contentMode: .fit)
-        // Menu: fixed-size slot, the menu bar window does not reliably resize with its content.
-        // Window: the cover grows with the window.
-        .frame(width: style == .menu ? 192 : nil, height: style == .menu ? 192 : nil)
-        .frame(maxWidth: style == .window ? .infinity : nil, maxHeight: style == .window ? .infinity : nil)
-        .clipShape(RoundedRectangle(cornerRadius: 6))
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+            // Menu: fixed-size slot, the menu bar window does not reliably resize with its content.
+            // Window: the cover grows with the window.
+            .frame(width: style == .menu ? 192 : nil, height: style == .menu ? 192 : nil)
+            .frame(maxWidth: style == .window ? .infinity : nil, maxHeight: style == .window ? .infinity : nil)
         .overlay(alignment: .topTrailing) {
             if style == .menu {
                 Button { PlayerWindow.show() } label: {

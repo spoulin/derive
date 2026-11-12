@@ -44,7 +44,7 @@ struct MerchView: View {
 
     private func loaded(_ items: [MerchItem], artist: Artist) -> some View {
         let available = items.filter { !$0.soldOut }
-        let slides = Array((available.isEmpty ? items : available).prefix(15))
+        let slides = available.isEmpty ? items : available
         return ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 Text("\(artist.name) on Bandcamp · \(items.count) items")

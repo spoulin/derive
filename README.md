@@ -111,8 +111,8 @@ Click its play button to listen to it first.
 ## Merch
 
 The **Merch** tab of the artist list shows what the artist playing sells on Bandcamp: CDs,
-records, tapes, clothes, prints. A slideshow at the top shows one item at a time and changes
-every 6 seconds; every item is listed below it. Items of the album playing come first, with an
+records, tapes, clothes, prints. A slideshow at the top goes through every item still available,
+one at a time, every 6 seconds; every item, sold out or not, is listed below it. Items of the album playing come first, with an
 orange note; sold-out items are dimmed. Click an item to open it on Bandcamp.
 
 For a label, this is the label's merch. Artists whose site can't be read by the app show no
