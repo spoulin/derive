@@ -1,3 +1,5 @@
+<img src="Resources/AppIcon.png" width="128" alt="Dérive app icon">
+
 # Dérive
 
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-support-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/stephanepoulin)
@@ -28,8 +30,8 @@ open Derive.app
 ```
 
 The app icon is drawn by `tools/make-icon.swift`. To change it, edit the script, then run
-`swift tools/make-icon.swift icon.png` and turn `icon.png` into `Resources/AppIcon.icns` with
-`iconutil`.
+`swift tools/make-icon.swift icon.png`, turn `icon.png` into `Resources/AppIcon.icns` with
+`iconutil`, and save a 256-pixel copy as `Resources/AppIcon.png` for this README.
 
 ## Artists
 
