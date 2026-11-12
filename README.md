@@ -27,6 +27,10 @@ Requires macOS 13+ and Swift 5.9+.
 open Derive.app
 ```
 
+The app icon is drawn by `tools/make-icon.swift`. To change it, edit the script, then run
+`swift tools/make-icon.swift icon.png` and turn `icon.png` into `Resources/AppIcon.icns` with
+`iconutil`.
+
 ## Artists
 
 Click **Artists…**: the artist list opens next to the player. A narrow window grows to the right

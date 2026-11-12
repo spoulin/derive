@@ -5,13 +5,16 @@ cd "$(dirname "$0")"
 swift build -c release
 APP=Derive.app
 rm -rf $APP
-mkdir -p $APP/Contents/MacOS
+mkdir -p $APP/Contents/MacOS $APP/Contents/Resources
 cp .build/release/Derive $APP/Contents/MacOS/
+# Made with tools/make-icon.swift; see the README to change it.
+cp Resources/AppIcon.icns $APP/Contents/Resources/
 cat > $APP/Contents/Info.plist <<P
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
 <key>CFBundleExecutable</key><string>Derive</string>
+<key>CFBundleIconFile</key><string>AppIcon</string>
 <key>CFBundleIdentifier</key><string>com.stephanepoulin.derive</string>
 <key>CFBundleName</key><string>Dérive</string>
 <key>CFBundleDisplayName</key><string>Dérive</string>
