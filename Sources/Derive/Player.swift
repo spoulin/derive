@@ -64,6 +64,11 @@ final class Player: ObservableObject {
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
+        guard !ArtistStore.shared.artists.isEmpty else {
+            errorMessage = "Add an artist to start"
+            ArtistsWindow.show()
+            return
+        }
         let artists = ArtistStore.shared.enabled
         guard !artists.isEmpty else {
             errorMessage = "No artist is turned on"

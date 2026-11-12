@@ -11,6 +11,10 @@ struct ArtistsView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             List {
+                if store.artists.isEmpty {
+                    Text("No artists yet. Paste the address of an artist or a label on Bandcamp below.")
+                        .foregroundStyle(.secondary)
+                }
                 ForEach($store.artists) { $artist in
                     HStack {
                         Toggle(isOn: $artist.enabled) {

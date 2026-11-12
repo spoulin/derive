@@ -3,8 +3,7 @@
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-support-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/stephanepoulin)
 
 Menu bar app for macOS. Press play and it picks a random album from the Bandcamp artists you
-choose, and plays its tracks in order. It starts with
-[Sonnov](https://sonnovdrone.bandcamp.com/music); add as many artists or labels as you like.
+choose, and plays its tracks in order. Add as many artists or labels as you like.
 
 ## Features
 
@@ -27,8 +26,9 @@ open Derive.app
 
 ## Artists
 
-Click **Artists…** in the menu bar window. Paste the address of an artist or label on Bandcamp,
-for example `sonnovdrone.bandcamp.com` or any page of their site, then click **Add**. Turn an
+The list starts empty: the first time you press play, the Artists window opens. You can also
+click **Artists…** in the menu bar window. Paste the address of an artist or label on Bandcamp,
+for example `artist.bandcamp.com` or any page of their site, then click **Add**. Turn an
 artist off to skip them without removing them.
 
 To pick an album, the app first picks one of the artists that are turned on, each with the same

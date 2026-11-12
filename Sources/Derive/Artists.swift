@@ -2,7 +2,7 @@ import Foundation
 
 struct Artist: Codable, Identifiable, Equatable {
     var id = UUID()
-    /// Root of the artist's Bandcamp site, e.g. https://sonnovdrone.bandcamp.com
+    /// Root of the artist's Bandcamp site, e.g. https://artist.bandcamp.com
     var url: URL
     var name: String
     var enabled = true
@@ -16,16 +16,13 @@ final class ArtistStore: ObservableObject {
     @Published var artists: [Artist] { didSet { save() } }
 
     private static let key = "artists"
-    static let defaultArtists = [
-        Artist(url: URL(string: "https://sonnovdrone.bandcamp.com")!, name: "Sonnov")
-    ]
 
     init() {
         if let data = UserDefaults.standard.data(forKey: Self.key),
            let saved = try? JSONDecoder().decode([Artist].self, from: data) {
             artists = saved
         } else {
-            artists = Self.defaultArtists
+            artists = []
         }
     }
 
