@@ -187,7 +187,7 @@ struct PlayerView: View {
             Spacer()
             switch style {
             case .menu:
-                Button("Quit") { NSApplication.shared.terminate(nil) }
+                AppMenu()
             case .window:
                 Toggle("On top", isOn: $keepOnTop)
                     .toggleStyle(.checkbox)

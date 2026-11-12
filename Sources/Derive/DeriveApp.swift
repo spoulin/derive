@@ -5,6 +5,7 @@ import SwiftUI
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         Task { @MainActor in
+            NowPlaying.setUp()
             PlayerWindow.restore()
             // Picks up artists followed or unfollowed on Bandcamp since the last launch.
             await ArtistStore.shared.refresh()

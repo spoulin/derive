@@ -3,7 +3,7 @@ import AVFoundation
 
 @MainActor
 final class Player: ObservableObject {
-    @Published private(set) var isPlaying = false
+    @Published private(set) var isPlaying = false { didSet { updateNowPlaying() } }
     @Published private(set) var isLoading = false
     @Published private(set) var nowPlaying: String?
     @Published private(set) var artist: String?
@@ -274,6 +274,17 @@ final class Player: ObservableObject {
         }
     }
 
+    /// Keeps Control Center and the media keys in step with what plays.
+    private func updateNowPlaying() {
+        guard let album, index < album.tracks.count else { return NowPlaying.update(nil) }
+        let track = album.tracks[index]
+        let elapsed = player.currentTime().seconds
+        NowPlaying.update(NowPlaying.Info(
+            title: track.title, album: album.title, artist: artist ?? "",
+            duration: track.duration, elapsed: elapsed.isFinite ? elapsed : 0,
+            isPlaying: isPlaying, cover: cover))
+    }
+
     private func playCurrent() {
         guard let album, index < album.tracks.count else { return }
         let track = album.tracks[index]
@@ -330,6 +341,7 @@ final class Player: ObservableObject {
     }
 
     private func showCover(_ image: NSImage?) {
+        defer { updateNowPlaying() }
         cover = image
         tint = image.map(CoverColor.tint) ?? CoverColor.neutral
         coverID += 1

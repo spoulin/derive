@@ -5,6 +5,8 @@ struct Track {
     let id: Int
     let title: String
     let url: URL
+    /// In seconds; 0 when the page doesn't give it.
+    var duration: Double = 0
 }
 
 struct Album {
@@ -78,7 +80,8 @@ enum Bandcamp {
                 guard let file = info["file"] as? [String: String],
                       let src = file["mp3-128"], let url = URL(string: src) else { return nil }
                 let id = (info["track_id"] as? NSNumber ?? info["id"] as? NSNumber)?.intValue ?? 0
-                return Track(id: id, title: info["title"] as? String ?? "", url: url)
+                return Track(id: id, title: info["title"] as? String ?? "", url: url,
+                             duration: (info["duration"] as? NSNumber)?.doubleValue ?? 0)
             }
         let current = root["current"] as? [String: Any]
         let art = (root["art_id"] as? NSNumber).flatMap {

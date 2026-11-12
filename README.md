@@ -12,6 +12,7 @@ choose, and plays its tracks in order. Add as many artists or labels as you like
 - Random album, played track by track
 - Radio mode: a new random album and track after each track
 - Thumbs down: skip a track and never hear it again
+- Media keys and Control Center's Now Playing
 - Your own list of Bandcamp artists and labels, each one turned on or off
 - Link your Bandcamp profile to play the artists and labels you follow, kept in sync
 - Every artist that is turned on has the same chance, whatever the size of their catalog
@@ -38,6 +39,10 @@ To install it in Applications, or to update the installed copy:
 This builds the app, quits the copy that is running, moves the new one to
 `/Applications/Derive.app` and opens it. Only one copy is kept, so `derive://` links always reach
 the installed app. Your artists and settings stay as they were.
+
+To open Dérive when you log in, click **…** at the bottom right of the menu bar window and
+choose **Open at Login**. It appears in System Settings › General › Login Items, where you can
+also turn it off. **Quit Dérive** is in the same menu.
 
 The app icon is drawn by `tools/make-icon.swift`. To change it, edit the script, then run
 `swift tools/make-icon.swift icon.png`, turn `icon.png` into `Resources/AppIcon.icns` with
@@ -122,6 +127,12 @@ on the cover: the player opens in its own window. Resize it to make the cover bi
 The window takes the main color of the cover, and the next cover fades in over the previous one.
 
 The window keeps its place and size, and comes back at launch if it was open when you quit.
+
+## Media keys and Control Center
+
+The play/pause and next keys of the keyboard control Dérive while it is the app playing. Control
+Center's Now Playing shows the track, the artist and the cover. There is no previous track: the
+previous key does nothing.
 
 ## Remote control (Stream Deck, scripts)
 
