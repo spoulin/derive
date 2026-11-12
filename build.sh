@@ -1,5 +1,7 @@
 #!/bin/zsh
 # Builds Derive.app (menu bar only, no Dock icon).
+# ./build.sh          builds it here, in the project folder.
+# ./build.sh install  builds it, then moves it to /Applications and opens it there.
 set -e
 cd "$(dirname "$0")"
 swift build -c release
@@ -30,3 +32,20 @@ cat > $APP/Contents/Info.plist <<P
 P
 codesign --force --sign - $APP
 echo "Built $APP"
+
+if [[ "$1" == "install" ]]; then
+    DEST=/Applications/Derive.app
+    # Quit the running copy, wherever it was opened from.
+    osascript -e 'tell application id "com.stephanepoulin.derive" to quit' 2>/dev/null || true
+    for _ in {1..40}; do
+        pgrep -f "Derive.app/Contents/MacOS/Derive" >/dev/null || break
+        sleep 0.25
+    done
+    # Move, not copy: one copy only, so derive:// links always reach the same app.
+    rm -rf "$DEST"
+    mv $APP "$DEST"
+    /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister \
+        -u "$PWD/$APP" 2>/dev/null || true
+    open "$DEST"
+    echo "Installed $DEST"
+fi

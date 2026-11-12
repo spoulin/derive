@@ -29,6 +29,16 @@ Requires macOS 13+ and Swift 5.9+.
 open Derive.app
 ```
 
+To install it in Applications, or to update the installed copy:
+
+```sh
+./build.sh install
+```
+
+This builds the app, quits the copy that is running, moves the new one to
+`/Applications/Derive.app` and opens it. Only one copy is kept, so `derive://` links always reach
+the installed app. Your artists and settings stay as they were.
+
 The app icon is drawn by `tools/make-icon.swift`. To change it, edit the script, then run
 `swift tools/make-icon.swift icon.png`, turn `icon.png` into `Resources/AppIcon.icns` with
 `iconutil`, and save a 256-pixel copy as `Resources/AppIcon.png` for this README.
