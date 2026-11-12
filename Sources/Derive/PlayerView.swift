@@ -70,7 +70,16 @@ struct PlayerView: View {
     }
 
     private var controls: some View {
-        HStack(spacing: 22) {
+        HStack(spacing: style == .menu ? 16 : 22) {
+            Button { player.radio.toggle() } label: {
+                Image(systemName: "dot.radiowaves.left.and.right")
+                    .font(.system(size: 15))
+                    .foregroundStyle(player.radio ? Color.accentColor : Color.secondary)
+            }
+            .help(player.radio
+                  ? "Radio is on: a new random album after each track"
+                  : "Radio is off: the album plays to the end")
+
             Button { player.nextAlbum() } label: {
                 Image(systemName: "shuffle").font(.system(size: 18))
             }
@@ -84,7 +93,13 @@ struct PlayerView: View {
             Button { player.nextTrack() } label: {
                 Image(systemName: "forward.fill").font(.system(size: 18))
             }
-            .help("Next track")
+            .help(player.radio ? "Next random track" : "Next track")
+            .disabled(player.nowPlaying == nil)
+
+            Button { player.dislikeCurrent() } label: {
+                Image(systemName: "hand.thumbsdown").font(.system(size: 15))
+            }
+            .help("Thumbs down: skip this track and never play it again")
             .disabled(player.nowPlaying == nil)
         }
         .buttonStyle(.plain)

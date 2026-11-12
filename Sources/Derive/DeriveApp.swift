@@ -24,6 +24,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 case "next": player.nextTrack()
                 case "shuffle": player.nextAlbum()
                 case "window": PlayerWindow.show()
+                case "radio": player.radio = true
+                case "album": player.radio = false
+                case "dislike": player.dislikeCurrent()
                 default: break
                 }
             }

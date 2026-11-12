@@ -15,6 +15,16 @@ final class Player: ObservableObject {
     @Published private(set) var tint = CoverColor.neutral
     @Published private(set) var pageURL: URL?
     @Published private(set) var errorMessage: String?
+    /// Radio: after each track, a new random album and a random track from it.
+    /// Off: the random album plays from its first track to its last.
+    @Published var radio = UserDefaults.standard.bool(forKey: Player.radioKey) {
+        didSet {
+            UserDefaults.standard.set(radio, forKey: Self.radioKey)
+            upcoming = nil
+            if radio, album != nil { prefetch() }
+        }
+    }
+    nonisolated static let radioKey = "radioMode"
 
     static let shared = Player()
 
@@ -25,6 +35,16 @@ final class Player: ObservableObject {
     private var artURL: URL?
     /// Release lists per artist site, read once per launch.
     private var sites: [URL: Site] = [:]
+
+    private struct Pick {
+        let album: Album
+        let artist: Artist
+        let index: Int
+    }
+    /// Radio: the next track, picked while the current one plays so the change has no gap.
+    private var upcoming: Pick?
+    private var prefetchTask: Task<Void, Never>?
+    private var preloadedCover: (url: URL, image: NSImage)?
 
     init() {
         endObserver = NotificationCenter.default.addObserver(
@@ -59,6 +79,18 @@ final class Player: ObservableObject {
         Task { await startRandomAlbum() }
     }
 
+    /// Thumbs down: never plays the current track again, and skips it now.
+    func dislikeCurrent() {
+        guard let album, index < album.tracks.count else { return }
+        let track = album.tracks[index]
+        guard track.id != 0 else { return }
+        dislikes.add(DislikedTrack(id: track.id, title: track.title, album: album.title,
+                                   artist: artist ?? "", albumURL: album.pageURL))
+        advance()
+    }
+
+    private var dislikes: DislikeStore { .shared }
+
     private func startRandomAlbum() async {
         guard !isLoading else { return }
         isLoading = true
@@ -74,13 +106,45 @@ final class Player: ObservableObject {
             errorMessage = "No artist is turned on"
             return
         }
-        if let (picked, from) = await randomAlbum(from: artists) {
-            album = picked
-            artist = from.name
-            index = 0
-            playCurrent()
-        } else {
+        // Skip a prefetched pick whose artist was turned off or removed, or whose track was disliked.
+        let ready = upcoming.flatMap { pick in
+            artists.contains { $0.id == pick.artist.id }
+                && !dislikes.contains(pick.album.tracks[pick.index].id) ? pick : nil
+        }
+        upcoming = nil
+        var next = ready
+        if next == nil { next = await randomPick(from: artists) }
+        guard let pick = next else {
             errorMessage = "Couldn't reach Bandcamp"
+            return
+        }
+        album = pick.album
+        artist = pick.artist.name
+        index = pick.index
+        playCurrent()
+        if radio { prefetch() }
+    }
+
+    private func randomPick(from artists: [Artist]) async -> Pick? {
+        guard let (album, artist) = await randomAlbum(from: artists) else { return nil }
+        let allowed = album.tracks.indices.filter { !dislikes.contains(album.tracks[$0].id) }
+        guard let first = allowed.first else { return nil }
+        return Pick(album: album, artist: artist, index: radio ? allowed.randomElement()! : first)
+    }
+
+    /// Picks the next radio track and downloads its cover in the background.
+    private func prefetch() {
+        prefetchTask?.cancel()
+        let artists = ArtistStore.shared.enabled
+        guard !artists.isEmpty else { return }
+        prefetchTask = Task {
+            guard let pick = await randomPick(from: artists), !Task.isCancelled, radio else { return }
+            upcoming = pick
+            if let url = pick.album.artURL,
+               let (data, _) = try? await URLSession.shared.data(from: url),
+               let image = NSImage(data: data), !Task.isCancelled {
+                preloadedCover = (url, image)
+            }
         }
     }
 
@@ -91,7 +155,9 @@ final class Player: ObservableObject {
             guard let site = await site(for: artist) else { continue }
             // A few releases may have no streamable tracks; try a handful of picks.
             for release in site.releases.shuffled().prefix(5) {
-                if let album = try? await Bandcamp.album(at: release), !album.tracks.isEmpty {
+                // Needs at least one track that wasn't disliked.
+                if let album = try? await Bandcamp.album(at: release),
+                   album.tracks.contains(where: { !dislikes.contains($0.id) }) {
                     return (album, artist)
                 }
             }
@@ -122,7 +188,13 @@ final class Player: ObservableObject {
 
     private func advance() {
         guard let album else { return }
+        if radio {
+            player.pause()
+            Task { await startRandomAlbum() }
+            return
+        }
         index += 1
+        while index < album.tracks.count, dislikes.contains(album.tracks[index].id) { index += 1 }
         if index < album.tracks.count {
             playCurrent()
         } else {
@@ -140,6 +212,10 @@ final class Player: ObservableObject {
 
     private func loadCover(_ url: URL?) {
         guard let url else { return showCover(nil) }
+        if let preloaded = preloadedCover, preloaded.url == url {
+            preloadedCover = nil
+            return showCover(preloaded.image)
+        }
         Task {
             guard let (data, _) = try? await URLSession.shared.data(from: url),
                   let image = NSImage(data: data),

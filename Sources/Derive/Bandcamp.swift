@@ -1,6 +1,8 @@
 import Foundation
 
 struct Track {
+    /// Bandcamp's track ID; 0 when the page doesn't give one.
+    let id: Int
     let title: String
     let url: URL
 }
@@ -75,7 +77,8 @@ enum Bandcamp {
             .compactMap { info in
                 guard let file = info["file"] as? [String: String],
                       let src = file["mp3-128"], let url = URL(string: src) else { return nil }
-                return Track(title: info["title"] as? String ?? "", url: url)
+                let id = (info["track_id"] as? NSNumber ?? info["id"] as? NSNumber)?.intValue ?? 0
+                return Track(id: id, title: info["title"] as? String ?? "", url: url)
             }
         let current = root["current"] as? [String: Any]
         let art = (root["art_id"] as? NSNumber).flatMap {
