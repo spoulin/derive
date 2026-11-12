@@ -2,7 +2,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "Sonnov",
+    name: "Derive",
     platforms: [.macOS(.v13)],
-    targets: [.executableTarget(name: "Sonnov", path: "Sources/Sonnov")]
+    targets: [.executableTarget(name: "Derive", path: "Sources/Derive")]
 )

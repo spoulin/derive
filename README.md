@@ -1,4 +1,4 @@
-# PlaySonnov
+# Dérive
 
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-support-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/stephanepoulin)
 
@@ -22,7 +22,7 @@ Requires macOS 13+ and Swift 5.9+.
 
 ```sh
 ./build.sh
-open Sonnov.app
+open Derive.app
 ```
 
 ## Artists
@@ -46,25 +46,27 @@ The window keeps its place and size, and comes back at launch if it was open whe
 
 ## Remote control (Stream Deck, scripts)
 
-The app handles `sonnov://` URLs while it is running:
+The app handles `derive://` URLs while it is running:
 
 | URL | Action |
 | --- | --- |
-| `sonnov://toggle` | Play / pause |
-| `sonnov://play` | Play |
-| `sonnov://pause` | Pause |
-| `sonnov://next` | Next track |
-| `sonnov://shuffle` | New random album |
-| `sonnov://window` | Open the player window |
+| `derive://toggle` | Play / pause |
+| `derive://play` | Play |
+| `derive://pause` | Pause |
+| `derive://next` | Next track |
+| `derive://shuffle` | New random album |
+| `derive://window` | Open the player window |
 
-From a terminal: `open -g sonnov://toggle` (`-g` keeps the app in the background).
+From a terminal: `open -g derive://toggle` (`-g` keeps the app in the background).
+
+The app was called Sonnov before: `sonnov://` links still work, and its settings are kept.
 
 In Stream Deck, add a **Website** action (System category) with the URL, or an action that runs the
 command above.
 
 ## Support
 
-If PlaySonnov saves you from picking the next drone album yourself, you can buy me a coffee.
+If Dérive saves you from picking the next album yourself, you can buy me a coffee.
 
 <a href="https://buymeacoffee.com/stephanepoulin"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me a Coffee" height="40"></a>
 

@@ -152,7 +152,7 @@ enum PlayerWindow {
             let host = NSHostingController(rootView: PlayerView(style: .window))
             host.sizingOptions = [.minSize]
             let created = NSWindow(contentViewController: host)
-            created.title = "Sonnov"
+            created.title = "Dérive"
             created.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
             created.titlebarAppearsTransparent = true
             created.titleVisibility = .hidden
