@@ -34,12 +34,9 @@ final class Player: ObservableObject {
     private var endObserver: NSObjectProtocol?
     private var artURL: URL?
     /// The artist of the album playing, for picking their next album when it ends.
-    private var currentArtist: Artist?
+    @Published private(set) var currentArtist: Artist?
     /// Release lists per artist site, read once per launch.
     private var sites: [URL: Site] = [:]
-    /// Sites that send the app around in a redirect loop (some custom domains do this for apps
-    /// that aren't web browsers). Skipped until the next launch instead of failing on every pick.
-    private var unreachable: Set<URL> = []
 
     private struct Pick {
         let album: Album
@@ -134,9 +131,12 @@ final class Player: ObservableObject {
         errorMessage = nil
         defer { isLoading = false }
         if let chosen {
-            if let pick = await randomPick(from: [chosen], excluding: excluded) { return start(pick) }
+            if let pick = await randomPick(from: [chosen], excluding: excluded, skipMarked: false) {
+                return start(pick)
+            }
             guard excluded != nil else {
-                errorMessage = "Couldn't play \(chosen.name)"
+                let reason = playability.reason(for: chosen.url).map { ": \($0.label)" } ?? ""
+                errorMessage = "Couldn't play \(chosen.name)\(reason)"
                 return
             }
         }
@@ -175,8 +175,10 @@ final class Player: ObservableObject {
         if radio { prefetch() }
     }
 
-    private func randomPick(from artists: [Artist], excluding excluded: URL? = nil) async -> Pick? {
-        guard let (album, artist) = await randomAlbum(from: artists, excluding: excluded) else { return nil }
+    private func randomPick(from artists: [Artist], excluding excluded: URL? = nil,
+                            skipMarked: Bool = true) async -> Pick? {
+        guard let (album, artist) = await randomAlbum(from: artists, excluding: excluded,
+                                                      skipMarked: skipMarked) else { return nil }
         let allowed = album.tracks.indices.filter { !dislikes.contains(album.tracks[$0].id) }
         guard let first = allowed.first else { return nil }
         return Pick(album: album, artist: artist, index: radio ? allowed.randomElement()! : first)
@@ -200,20 +202,34 @@ final class Player: ObservableObject {
 
     /// Every artist has the same chance, whatever the size of their catalog.
     /// When the picked artist fails, falls back to another one.
-    private func randomAlbum(from artists: [Artist], excluding excluded: URL? = nil) async -> (Album, Artist)? {
-        for artist in artists.filter({ !unreachable.contains($0.url) }).shuffled().prefix(3) {
+    /// - Parameter skipMarked: leaves out artists found unplayable in the last week. False when
+    ///   the user asked for this artist: it is tried anyway.
+    private func randomAlbum(from artists: [Artist], excluding excluded: URL? = nil,
+                             skipMarked: Bool = true) async -> (Album, Artist)? {
+        let candidates = skipMarked ? artists.filter { !playability.shouldSkip($0.url) } : artists
+        for artist in candidates.shuffled().prefix(3) {
             guard let site = await site(for: artist) else { continue }
+            let releases = site.releases.filter { $0 != excluded }
+            var empty = 0
             // A few releases may have no streamable tracks; try a handful of picks.
-            for release in site.releases.filter({ $0 != excluded }).shuffled().prefix(5) {
+            for release in releases.shuffled().prefix(5) {
+                guard let album = try? await Bandcamp.album(at: release) else { continue }
+                if album.tracks.isEmpty { empty += 1; continue }
+                playability.clear(artist.url)
                 // Needs at least one track that wasn't disliked.
-                if let album = try? await Bandcamp.album(at: release),
-                   album.tracks.contains(where: { !dislikes.contains($0.id) }) {
+                if album.tracks.contains(where: { !dislikes.contains($0.id) }) {
                     return (album, artist)
                 }
+            }
+            // Only when every release was looked at and none has audio.
+            if excluded == nil, !releases.isEmpty, empty == releases.count {
+                playability.mark(artist.url, .noAudio)
             }
         }
         return nil
     }
+
+    private var playability: PlayabilityStore { .shared }
 
     private func site(for artist: Artist) async -> Site? {
         if let site = sites[artist.url] { return site }
@@ -222,10 +238,39 @@ final class Player: ObservableObject {
             sites[artist.url] = site
             return site
         } catch let error as URLError where error.code == .httpTooManyRedirects {
-            unreachable.insert(artist.url)
+            playability.mark(artist.url, .unreachable)
+            return nil
+        } catch BandcampError.noAlbums {
+            playability.mark(artist.url, .noReleases)
             return nil
         } catch {
-            return nil
+            return nil // Network trouble: nothing is learned about the artist.
+        }
+    }
+
+    /// Progress of "Check which artists can play", nil when not running.
+    @Published private(set) var checkProgress: (done: Int, total: Int)?
+
+    /// Looks at every artist once, one at a time to go easy on Bandcamp, and marks or clears
+    /// them. Reads the site, then up to three releases until one has audio.
+    func checkPlayability(of artists: [Artist]) async {
+        guard checkProgress == nil else { return }
+        checkProgress = (0, artists.count)
+        defer { checkProgress = nil }
+        for (done, artist) in artists.enumerated() {
+            checkProgress = (done, artists.count)
+            guard let site = await site(for: artist) else { continue }
+            var empty = 0
+            var playable = false
+            for release in site.releases.shuffled().prefix(3) {
+                guard let album = try? await Bandcamp.album(at: release) else { continue }
+                if album.tracks.isEmpty { empty += 1 } else { playable = true; break }
+            }
+            if playable {
+                playability.clear(artist.url)
+            } else if empty == site.releases.count {
+                playability.mark(artist.url, .noAudio)
+            }
         }
     }
 

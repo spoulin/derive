@@ -30,28 +30,42 @@ open Derive.app
 ## Artists
 
 Click **Artists…**: the artist list opens next to the player. A narrow window grows to the right
-to make room; a wide window (840 points or more) keeps its size, and the player gets narrower. Click **Hide artists** to close it. The list starts empty: the first time you press play,
-the list opens. Paste the address of an artist or label on Bandcamp,
-for example `artist.bandcamp.com` or any page of their site, then click **Add**. Turn an
-artist off to skip them without removing them.
+to make room; a wide window (840 points or more) keeps its size, and the player gets narrower.
+Click **Hide artists** to close it. The list starts empty: the first time you press play, the
+list opens.
+
+To add an artist or a label, click **+** at the top right of the list, paste the address of
+their Bandcamp site, for example `artist.bandcamp.com` or any page of their site, then click
+**Add**. Turn an artist off with its switch to skip them without removing them.
 
 Click the play button next to an artist to hear a random album by that artist right away. This
 turns radio mode off, so the album plays to the end, followed by other albums by that artist.
 
 ### Artists you follow on Bandcamp
 
-In the field under the artist list, paste your Bandcamp profile, for example
-`bandcamp.com/yourname`, and click **Add**: the app sees it is a profile and links it. The artists and labels it follows appear under **Following on Bandcamp**. The
-profile must be public; no sign-in is needed.
+Click **+** and paste your Bandcamp profile, for example `bandcamp.com/yourname`: the app sees it
+is a profile and links it. The artists and labels it follows appear under **Following on
+Bandcamp**. The profile must be public; no sign-in is needed.
 
-The list updates at each launch, or when you choose **Refresh** in the **…** menu of that section: artists you follow on Bandcamp
-are added, and artists you unfollow are removed. Turning one off here stays as you set it.
-**Unlink**, in the same menu, removes these artists; artists added by hand stay. The menu also turns
-all of them on or off at once.
+The list updates at each launch, or when you choose **Refresh** in the **…** menu at the top
+right: artists you follow on Bandcamp are added, and artists you unfollow are removed. Turning
+one off here stays as you set it. **Unlink**, in the same menu, removes these artists; artists
+added by hand stay. The menu also turns all of them on or off at once.
 
-Some artists use their own domain instead of `name.bandcamp.com`. Bandcamp sends apps that
-aren't web browsers around in a loop on some of these sites, so the app can't read them and
-skips them.
+### Artists that can't be played
+
+Some artists show in grey, with the reason in orange:
+
+- **No audio on Bandcamp**: their releases have no tracks to listen to, even in a web browser.
+- **Site can't be read by the app**: they use their own domain instead of `name.bandcamp.com`,
+  and Bandcamp sends apps that aren't web browsers around in a loop there. They play in a web
+  browser.
+- **No releases on Bandcamp**: their page lists nothing.
+
+The app finds these when it tries to play them, and skips them when picking at random for a
+week. Then it tries them again, in case the artist changed something. To find them all at once,
+choose **Check which artists can play** in the **…** menu; it reads each artist's site one at a
+time, so it takes a few minutes.
 
 ### How an album is picked
 
@@ -72,6 +86,16 @@ Click the thumbs down to skip the current track and never play it again, in radi
 albums. The app remembers these tracks by their Bandcamp ID. To hear one again, click
 **Artists…**, open the **Thumbs down** tab and click the undo arrow next to it. Not sure it's the right track?
 Click its play button to listen to it first.
+
+## Merch
+
+The **Merch** tab of the artist list shows what the artist playing sells on Bandcamp: CDs,
+records, tapes, clothes, prints. A slideshow at the top shows one item at a time and changes
+every 6 seconds; every item is listed below it. Items of the album playing come first, with an
+orange note; sold-out items are dimmed. Click an item to open it on Bandcamp.
+
+For a label, this is the label's merch. Artists whose site can't be read by the app show no
+merch either.
 
 ## Player window
 
