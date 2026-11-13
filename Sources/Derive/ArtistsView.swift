@@ -1,8 +1,9 @@
 import AppKit
 import SwiftUI
 
-/// Panel of the player window, with four tabs: the artists to pick from, the tracks given a
-/// thumbs down, then the artist playing (photo, bio, shows, fan comments) and their merch.
+/// Panel of the player window, with two groups of tabs: the artist playing (photo, bio, shows,
+/// fan comments) and their merch on the left; your library, the artists to pick from and the
+/// tracks given a thumbs down, on the right.
 struct ArtistsView: View {
     enum Tab: String { case artists, dislikes, artist, merch }
 
@@ -24,20 +25,23 @@ struct ArtistsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
+            // Two groups: on the left what follows the album playing, on the right your library
+            // (the artists to pick from and the thumbs down). Icons and counts keep the bar
+            // short; the names are in the tooltips. A segmented Picker drops an icon mixed with
+            // text, so each group is a row of buttons styled like one.
             HStack {
-                // Icons and counts keep the bar short; the names are in the tooltips. A segmented
-                // Picker drops an icon mixed with text, so this is a row of buttons styled like one.
-                HStack(spacing: 2) {
-                    tabButton(.artists, symbol: "person.2", count: store.artists.count, name: "Artists")
-                    tabButton(.dislikes, symbol: "hand.thumbsdown", count: dislikes.tracks.count,
-                              name: "Thumbs down")
+                tabGroup {
                     tabButton(.artist, symbol: "info.circle", count: showCount,
                               name: showCount.map { "Artist playing · \($0) upcoming shows" } ?? "Artist playing")
-                    tabButton(.merch, symbol: "cart", count: merchCount, name: "Merch")
+                    tabButton(.merch, symbol: "cart", count: merchCount, name: "Merch of the artist playing")
                 }
-                .padding(2)
-                .background(.quaternary, in: RoundedRectangle(cornerRadius: 7))
                 Spacer()
+                tabGroup {
+                    tabButton(.artists, symbol: "person.2", count: store.artists.count,
+                              name: "Your artists")
+                    tabButton(.dislikes, symbol: "hand.thumbsdown", count: dislikes.tracks.count,
+                              name: "Your thumbs down")
+                }
             }
 
             switch tab {
@@ -72,6 +76,12 @@ struct ArtistsView: View {
         guard let site = player.currentArtist?.url,
               case .loaded(let items) = merch.state(for: site) else { return nil }
         return items.filter { !$0.soldOut }.count
+    }
+
+    private func tabGroup<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
+        HStack(spacing: 2, content: content)
+            .padding(2)
+            .background(.quaternary, in: RoundedRectangle(cornerRadius: 7))
     }
 
     private func tabButton(_ value: Tab, symbol: String, count: Int?, name: String) -> some View {

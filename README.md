@@ -112,15 +112,22 @@ Click its play button to listen to it first.
 
 ## Panel tabs
 
-The panel next to the player has four tabs, each shown by an icon and a number. Point at a tab
-to see its name.
+The panel next to the player has two groups of tabs, each tab shown by an icon and a number.
+Point at a tab to see its name.
+
+On the left, the album playing. These tabs change with every album:
+
+| Icon | Tab | Number |
+| --- | --- | --- |
+| (i) | The artist playing | Upcoming shows, when there are any |
+| Cart | Merch of the artist playing | Items still available |
+
+On the right, your library. These tabs don't change with the music:
 
 | Icon | Tab | Number |
 | --- | --- | --- |
 | People | Artists to pick from | Artists in the list |
 | Thumbs down | Tracks given a thumbs down | Tracks |
-| (i) | The artist playing | Upcoming shows, when there are any |
-| Cart | Merch of the artist playing | Items still available |
 
 The numbers of the last two tabs show without opening them, as soon as the album starts.
 
