@@ -102,6 +102,7 @@ struct ArtistInfoView: View {
                             Text(show.place).font(.caption).foregroundStyle(.secondary)
                         }
                         Spacer(minLength: 0)
+                        if let url = show.url { TicketLabel(page: url) }
                     }
                     .contentShape(Rectangle())
                 }
@@ -307,5 +308,27 @@ private struct FlowLayout: Layout {
         }
         if !row.indices.isEmpty { rows.append(row) }
         return rows
+    }
+}
+
+/// The ticket price of a show, read from Songkick when the show is on screen: "$40–$60",
+/// "Few left" under it when tickets run low, or "Sold out".
+private struct TicketLabel: View {
+    let page: URL
+    @ObservedObject private var store = TicketStore.shared
+
+    var body: some View {
+        VStack(alignment: .trailing, spacing: 1) {
+            if let info = store.tickets[page] ?? nil {
+                if info.soldOut {
+                    Text("Sold out").foregroundStyle(.orange)
+                } else {
+                    if let price = info.priceText { Text(price).foregroundStyle(.secondary) }
+                    if info.fewLeft { Text("Few left").font(.caption2).foregroundStyle(.orange) }
+                }
+            }
+        }
+        .font(.caption.monospacedDigit())
+        .task(id: page) { await store.load(page) }
     }
 }

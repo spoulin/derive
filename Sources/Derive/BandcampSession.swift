@@ -149,29 +149,40 @@ final class BandcampSession: NSObject, ObservableObject {
 extension BandcampSession {
     /// Follows or unfollows an artist or label on Bandcamp, as its Follow button does, with the
     /// session. Returns whether you follow it afterwards, or nil when it didn't work.
-    func setFollowing(_ follow: Bool, bandID: Int) async -> Bool? {
+    func setFollowing(_ follow: Bool, bandID: Int, site: URL) async -> Bool? {
         if fanID == nil { _ = await readUsername() }
-        guard isSignedIn, let fanID else { return nil }
-        let endpoint = URL(string: "https://bandcamp.com/fan_follow_band_cb")!
-        guard let cookies = await cookieHeader(for: endpoint) else { return nil }
-        // Bandcamp's "crumb" token: sent without one, the answer is invalid_crumb with a fresh
-        // one, and the request goes again with it, as the site does.
-        var crumb: String?
+        guard isSignedIn, let fanID, let host = site.host else { return nil }
+        // The site's own page, read with the session, carries the "crumb" token the follow needs.
+        // A custom domain doesn't get the session; bandcamp.com stands in for it, as on the site.
+        let base = host.hasSuffix(".bandcamp.com") ? URL(string: "https://\(host)")! : URL(string: "https://bandcamp.com")!
+        let page = host.hasSuffix(".bandcamp.com") ? base : URL(string: "https://bandcamp.com/gift_cards")!
+        guard let cookies = await cookieHeader(for: base) else { return nil }
+        var pageRequest = URLRequest(url: page)
+        pageRequest.httpShouldHandleCookies = false
+        pageRequest.setValue(cookies, forHTTPHeaderField: "Cookie")
+        let html = (try? await Bandcamp.session.data(for: pageRequest)).map { String(decoding: $0.0, as: UTF8.self) } ?? ""
+        let crumbs = Bandcamp.attribute("data-crumbs", in: html)
+            .flatMap { try? JSONSerialization.jsonObject(with: Data($0.utf8)) as? [String: String] } ?? [:]
+        var crumb = crumbs["fan_follow_band_cb"]
+
+        let endpoint = base.appendingPathComponent("fan_follow_band_cb")
         for _ in 0..<3 {
             var request = URLRequest(url: endpoint)
             request.httpMethod = "POST"
             request.httpShouldHandleCookies = false
             request.setValue(cookies, forHTTPHeaderField: "Cookie")
             request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+            request.setValue(base.absoluteString, forHTTPHeaderField: "Origin")
+            request.setValue(page.absoluteString, forHTTPHeaderField: "Referer")
             var form = URLComponents()
             form.queryItems = [URLQueryItem(name: "fan_id", value: "\(fanID)"),
                                URLQueryItem(name: "band_id", value: "\(bandID)"),
                                URLQueryItem(name: "action", value: follow ? "follow" : "unfollow")]
             if let crumb { form.queryItems?.append(URLQueryItem(name: "crumb", value: crumb)) }
             request.httpBody = form.percentEncodedQuery?.data(using: .utf8)
-            guard let (data, _) = try? await Bandcamp.session.data(for: request),
-                  let answer = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
-            else { return nil }
+            guard let (data, _) = try? await Bandcamp.session.data(for: request) else { return nil }
+            guard let answer = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
+            // A stale token: Bandcamp sends a fresh one, and the request goes again with it.
             if answer["error"] as? String == "invalid_crumb", let fresh = answer["crumb"] as? String {
                 crumb = fresh
                 continue

@@ -114,7 +114,8 @@ chance, then picks one of that artist's albums at random.
 ## Radio mode
 
 By default, the app plays the random album from its first track to its last. When the album ends,
-another random album by the same artist starts. To change artist, click the dice, left of play: another album at random. Check **Radio**
+another random album by the same artist starts. To change artist, click the dice, left of play: another album at random. With radio or
+Favorites on, the dice is greyed out: every track is already a new random pick, so next does it. Check **Radio**
 at the bottom of the player window (or in the "…" menu of the menu bar player) to turn on radio
 mode: after each track, the app picks a new artist and album at random, then plays a random track
 from it. The next track is picked while the current one plays, so there is no wait between
@@ -175,7 +176,9 @@ On the right, your library. These tabs don't change with the music:
 The **(i)** tab shows who plays the album playing, read from its Bandcamp page:
 
 - the artist's photo, name and city, bio and links;
-- upcoming shows, with the venue and the city; click one to open its page;
+- upcoming shows, with the venue and the city, and the ticket price when Songkick has it, with
+  **Few left** or **Sold out**; click one to open its page. Prices are read only for the shows
+  on screen;
 - the album: release date, tags, text and credits, and the comments fans left on it, with their
   favorite track.
 

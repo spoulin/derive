@@ -45,7 +45,7 @@ struct FollowButton: View {
         working = true
         Task {
             defer { working = false }
-            guard let now = await session.setFollowing(follow, bandID: bandID) else {
+            guard let now = await session.setFollowing(follow, bandID: bandID, site: site) else {
                 Toast.shared.show("Bandcamp didn't take it. Try again, or on the artist's page.",
                                   symbol: "exclamationmark.triangle")
                 return

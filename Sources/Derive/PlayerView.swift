@@ -208,7 +208,11 @@ struct PlayerView: View {
                 // doesn't mix the tracks.
                 Image(systemName: "dice").font(.system(size: 18))
             }
-            .help("Another album at random")
+            // With radio or favorites, every track is already a new random pick: next does it.
+            .disabled(player.radio || player.favoritesOnly)
+            .help(player.favoritesOnly ? "Favorites picks a new track each time: use next"
+                  : player.radio ? "Radio picks a new album each time: use next"
+                  : "Another album at random")
 
             Button { player.toggle() } label: {
                 Image(systemName: player.isPlaying ? "pause.circle.fill" : "play.circle.fill")
