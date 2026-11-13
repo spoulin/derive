@@ -17,7 +17,7 @@ choose, and plays its tracks in order. Add as many artists or labels as you like
 - Link your Bandcamp profile to play the artists and labels you follow, kept in sync
 - Sign in to Bandcamp: your profile links by itself, and artists' messages show in Community
 - Every artist that is turned on has the same chance, whatever the size of their catalog
-- Album cover and current track
+- Album cover and current track, with a bar to see the time left and move in the track
 - A player window that stays open, with a large cover, to keep on your desktop
 - Play/pause, next track, and shuffle (new random album)
 - Open the current album on Bandcamp
@@ -129,7 +129,9 @@ On the left, the album playing. These tabs change with every album:
 | Speech bubbles | Community page of the artist playing | Posts listed, when there are any |
 | Cart | Merch of the artist playing | Items still available |
 
-Their numbers show without opening them, as soon as the album starts.
+Their numbers show without opening them, as soon as the album starts. When the artist changes
+while the Merch or Community tab is open, and the new artist has nothing to show there, the
+panel goes to the (i) tab.
 
 On the right, your library. These tabs don't change with the music:
 
@@ -203,6 +205,10 @@ on the cover: the player opens in its own window. Resize it to make the cover bi
 **On top** to keep it above other apps.
 
 The window takes the main color of the cover, and the next cover fades in over the previous one.
+
+Under the cover, a bar shows where the track is, with the time played on the left and the time
+left on the right. Click or drag the bar to move in the track. Control Center's bar moves in the
+track too.
 
 The window keeps its place and size, and comes back at launch if it was open when you quit.
 

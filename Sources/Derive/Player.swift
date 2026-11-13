@@ -29,6 +29,9 @@ final class Player: ObservableObject {
     static let shared = Player()
 
     private let player = AVPlayer()
+    /// Where the track playing is, for the timeline.
+    let clock = PlaybackClock()
+    private var timeObserver: Any?
     private var album: Album?
     private var index = 0
     private var endObserver: NSObjectProtocol?
@@ -53,6 +56,35 @@ final class Player: ObservableObject {
             forName: .AVPlayerItemDidPlayToEndTime, object: nil, queue: .main
         ) { [weak self] _ in
             Task { @MainActor in self?.advance() }
+        }
+        timeObserver = player.addPeriodicTimeObserver(
+            forInterval: CMTime(seconds: 0.25, preferredTimescale: 600), queue: .main
+        ) { [weak self] time in
+            Task { @MainActor in self?.tick(time) }
+        }
+    }
+
+    private func tick(_ time: CMTime) {
+        guard !clock.isSeeking, time.seconds.isFinite else { return }
+        clock.elapsed = time.seconds
+        // Bandcamp's duration first; the file's own once known, for the rare track without one.
+        if clock.duration <= 0, let item = player.currentItem, item.duration.seconds.isFinite {
+            clock.duration = item.duration.seconds
+        }
+    }
+
+    /// Moves in the track playing, in seconds from its start.
+    func seek(to seconds: Double) {
+        guard player.currentItem != nil, clock.duration > 0 else { return }
+        let target = min(max(seconds, 0), clock.duration - 0.5)
+        clock.elapsed = target
+        clock.isSeeking = true
+        player.seek(to: CMTime(seconds: target, preferredTimescale: 600),
+                    toleranceBefore: .zero, toleranceAfter: .zero) { [weak self] _ in
+            Task { @MainActor in
+                self?.clock.isSeeking = false
+                self?.updateNowPlaying()
+            }
         }
     }
 
@@ -314,6 +346,8 @@ final class Player: ObservableObject {
         }
         pageURL = album.pageURL
         nowPlaying = "\(album.title) — \(index + 1). \(track.title)"
+        clock.elapsed = 0
+        clock.duration = track.duration
         player.replaceCurrentItem(with: AVPlayerItem(url: track.url))
         player.play()
         isPlaying = true
@@ -341,6 +375,8 @@ final class Player: ObservableObject {
             artist = nil
             artURL = nil
             pageURL = nil
+            clock.elapsed = 0
+            clock.duration = 0
             showCover(nil)
         }
     }
@@ -366,4 +402,14 @@ final class Player: ObservableObject {
         tint = image.map(CoverColor.tint) ?? CoverColor.neutral
         coverID += 1
     }
+}
+
+/// Elapsed time and duration of the track playing. Apart from Player, so its four updates a
+/// second redraw only the timeline.
+@MainActor
+final class PlaybackClock: ObservableObject {
+    @Published var elapsed: Double = 0
+    @Published var duration: Double = 0
+    /// While a seek runs, the time observer would move the bar back to the old position.
+    var isSeeking = false
 }

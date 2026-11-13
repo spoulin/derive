@@ -58,6 +58,9 @@ struct PlayerView: View {
     var body: some View {
         VStack(spacing: 10) {
             cover
+            TrackTimeline(compact: style == .menu)
+                .frame(maxWidth: style == .menu ? 192 : 520)
+                .padding(.horizontal, style == .menu ? 0 : 8)
             controls
             status
             Divider()

@@ -50,16 +50,7 @@ struct ArtistInfoView: View {
             }
         }
         if let photo = info.photoURL {
-            Color.clear
-                .frame(height: 220)
-                .frame(maxWidth: .infinity)
-                .overlay {
-                    AsyncImage(url: photo) { image in
-                        image.resizable().scaledToFill()
-                    } placeholder: {
-                        Rectangle().fill(.quaternary)
-                    }
-                }
+            ArtistPhoto(url: photo)
                 .overlay(alignment: .bottomLeading) {
                     names
                         .foregroundStyle(.white)
@@ -187,6 +178,33 @@ struct ArtistInfoView: View {
         Text(text)
             .foregroundStyle(.secondary)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+}
+
+/// The artist's photo, whole: its height follows its shape. Only a photo taller than 4:5 is cut,
+/// from the bottom, so the faces at the top stay.
+private struct ArtistPhoto: View {
+    let url: URL
+    @State private var image: NSImage?
+
+    var body: some View {
+        let ratio = image.map { max($0.size.width / max($0.size.height, 1), 0.8) } ?? 16.0 / 9
+        Color.clear
+            .aspectRatio(ratio, contentMode: .fit)
+            .frame(maxWidth: .infinity)
+            .overlay(alignment: .top) {
+                if let image {
+                    Image(nsImage: image).resizable().scaledToFill()
+                } else {
+                    Rectangle().fill(.quaternary)
+                }
+            }
+            .clipped()
+            .task(id: url) {
+                image = nil
+                guard let (data, _) = try? await URLSession.shared.data(from: url) else { return }
+                image = NSImage(data: data)
+            }
     }
 }
 

@@ -70,6 +70,14 @@ struct ArtistsView: View {
         .task(id: player.pageURL) {
             if let page = player.pageURL { await info.load(page) }
         }
+        // When the artist changes and the Merch or Community tab open has nothing to show for
+        // the new one, go to the artist's first tab. Keyed by artist, so a tab you open yourself
+        // stays open, empty or not.
+        .onChange(of: emptyTabKey) { _ in
+            guard let site = player.currentArtist?.url else { return }
+            if tab == .merch, isMerchEmpty(site) == true { tab = .artist }
+            if tab == .community, isCommunityEmpty(site) == true { tab = .artist }
+        }
     }
 
     /// Upcoming shows of the artist playing, when there are any.
@@ -77,6 +85,30 @@ struct ArtistsView: View {
         guard let page = player.pageURL, case .loaded(let artist) = info.state(for: page),
               !artist.shows.isEmpty else { return nil }
         return artist.shows.count
+    }
+
+    /// Changes when the artist changes, or when what their Merch or Community tab holds is known.
+    private var emptyTabKey: String {
+        guard let site = player.currentArtist?.url else { return "" }
+        return "\(site)|\(String(describing: isMerchEmpty(site)))|\(String(describing: isCommunityEmpty(site)))"
+    }
+
+    /// nil while loading.
+    private func isMerchEmpty(_ site: URL) -> Bool? {
+        switch merch.state(for: site) {
+        case .loaded(let items): items.isEmpty
+        case .failed: true
+        case nil, .loading: nil
+        }
+    }
+
+    /// nil while loading. Empty: no community page, or a page without posts or supporters.
+    private func isCommunityEmpty(_ site: URL) -> Bool? {
+        switch community.state(for: site) {
+        case .loaded(let page): page.map { $0.stories.isEmpty && $0.supporters.isEmpty } ?? true
+        case .failed: true
+        case nil, .loading: nil
+        }
     }
 
     /// Posts listed in the Community tab for the artist playing (messages only followers can

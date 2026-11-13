@@ -20,7 +20,14 @@ enum NowPlaying {
         handle(center.nextTrackCommand) { Player.shared.nextTrack() }
         // There is no previous track in a random player.
         center.previousTrackCommand.isEnabled = false
-        center.changePlaybackPositionCommand.isEnabled = false
+        // Moving in the track from Control Center's bar.
+        center.changePlaybackPositionCommand.isEnabled = true
+        center.changePlaybackPositionCommand.addTarget { event in
+            guard let event = event as? MPChangePlaybackPositionCommandEvent else { return .commandFailed }
+            let position = event.positionTime
+            DispatchQueue.main.async { Player.shared.seek(to: position) }
+            return .success
+        }
     }
 
     struct Info {
