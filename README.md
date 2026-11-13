@@ -15,6 +15,7 @@ choose, and plays its tracks in order. Add as many artists or labels as you like
 - Media keys and Control Center's Now Playing
 - Your own list of Bandcamp artists and labels, each one turned on or off
 - Link your Bandcamp profile to play the artists and labels you follow, kept in sync
+- Sign in to Bandcamp: your profile links by itself, and artists' messages show in Community
 - Every artist that is turned on has the same chance, whatever the size of their catalog
 - Album cover and current track
 - A player window that stays open, with a large cover, to keep on your desktop
@@ -67,9 +68,13 @@ turns radio mode off, so the album plays to the end, followed by other albums by
 
 ### Artists you follow on Bandcamp
 
-Click **+** and paste your Bandcamp profile, for example `bandcamp.com/yourname`: the app sees it
-is a profile and links it. The artists and labels it follows appear under **Following on
-Bandcamp**. The profile must be public; no sign-in is needed.
+The simplest way: click **Sign In to Bandcamp…**, in the empty list or in the **+** panel, and
+sign in. Dérive links your profile by itself (see [Signing in to Bandcamp](#signing-in-to-bandcamp)).
+
+Without signing in: click **+** and paste your Bandcamp profile, for example
+`bandcamp.com/yourname`: the app sees it is a profile and links it. The profile must be public.
+
+Either way, the artists and labels it follows appear under **Following on Bandcamp**.
 
 The list updates at each launch, or when you choose **Refresh** in the **…** menu at the top
 right: artists you follow on Bandcamp are added, and artists you unfollow are removed. Turning
