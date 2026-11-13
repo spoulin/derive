@@ -21,6 +21,8 @@ struct ArtistsView: View {
     @State private var confirmUnlink = false
     @State private var showAdd = false
     @AppStorage("panelTab") private var tab = Tab.artists
+    /// The tab cycle of a new track, while it runs.
+    @State private var tabCycle: Task<Void, Never>?
 
     private var followedCount: Int { store.artists.filter(\.isFollowed).count }
     private var manualCount: Int { store.artists.count - followedCount }
@@ -49,13 +51,11 @@ struct ArtistsView: View {
                 }
             }
 
-            switch tab {
-            case .artists: artistsTab
-            case .dislikes: dislikesTab
-            case .artist: ArtistInfoView()
-            case .merch: MerchView()
-            case .community: CommunityView()
+            // A ZStack, so a tab changed by the cycle fades into the next one.
+            ZStack {
+                tabContent.id(tab).transition(.opacity)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         }
         .padding(16)
         .frame(minHeight: 420)
@@ -70,14 +70,7 @@ struct ArtistsView: View {
         .task(id: player.pageURL) {
             if let page = player.pageURL { await info.load(page) }
         }
-        // When the artist changes and the Merch or Community tab open has nothing to show for
-        // the new one, go to the artist's first tab. Keyed by artist, so a tab you open yourself
-        // stays open, empty or not.
-        .onChange(of: emptyTabKey) { _ in
-            guard let site = player.currentArtist?.url else { return }
-            if tab == .merch, isMerchEmpty(site) == true { tab = .artist }
-            if tab == .community, isCommunityEmpty(site) == true { tab = .artist }
-        }
+        .onChange(of: player.nowPlaying) { _ in startTabCycle() }
     }
 
     /// Upcoming shows of the artist playing, when there are any.
@@ -87,10 +80,57 @@ struct ArtistsView: View {
         return artist.shows.count
     }
 
-    /// Changes when the artist changes, or when what their Merch or Community tab holds is known.
-    private var emptyTabKey: String {
-        guard let site = player.currentArtist?.url else { return "" }
-        return "\(site)|\(String(describing: isMerchEmpty(site)))|\(String(describing: isCommunityEmpty(site)))"
+    @ViewBuilder private var tabContent: some View {
+        switch tab {
+        case .artists: artistsTab
+        case .dislikes: dislikesTab
+        case .artist: ArtistInfoView()
+        case .merch: MerchView()
+        case .community: CommunityView()
+        }
+    }
+
+    /// At each new track, while a tab of the album playing is open: the (i) tab, then Community,
+    /// then Merch, 30 seconds apart. A tab with nothing to show is skipped: no posts, or no merch
+    /// still available. Opening a tab yourself stops it. Your library tabs (artists, thumbs
+    /// down) are never left this way.
+    private func startTabCycle() {
+        tabCycle?.cancel()
+        tabCycle = nil
+        guard player.nowPlaying != nil, [.artist, .community, .merch].contains(tab) else { return }
+        if tab != .artist { withAnimation(.easeInOut(duration: 0.8)) { tab = .artist } }
+        tabCycle = Task { @MainActor in
+            var remaining: [Tab] = [.community, .merch]
+            while !remaining.isEmpty {
+                try? await Task.sleep(nanoseconds: 30_000_000_000)
+                var next: Tab?
+                while next == nil, !remaining.isEmpty {
+                    let candidate = remaining.removeFirst()
+                    if await hasContent(candidate) { next = candidate }
+                    guard !Task.isCancelled else { return }
+                }
+                guard let next else { return }
+                withAnimation(.easeInOut(duration: 0.8)) { tab = next }
+            }
+        }
+    }
+
+    /// Whether a tab of the album playing has something to show, waiting up to 10 seconds for it
+    /// to load.
+    private func hasContent(_ tab: Tab) async -> Bool {
+        for _ in 0..<20 {
+            guard !Task.isCancelled, let site = player.currentArtist?.url else { return false }
+            switch tab {
+            case .community:
+                if let empty = isCommunityEmpty(site) { return !empty }
+            case .merch:
+                if isMerchEmpty(site) != nil { return (merchCount ?? 0) > 0 }
+            default:
+                return true
+            }
+            try? await Task.sleep(nanoseconds: 500_000_000)
+        }
+        return false
     }
 
     /// nil while loading.
@@ -135,7 +175,12 @@ struct ArtistsView: View {
 
     private func tabButton(_ value: Tab, symbol: String, count: Int?, name: String) -> some View {
         let selected = tab == value
-        return Button { tab = value } label: {
+        return Button {
+            // Choosing a tab yourself stops the cycle of the track playing.
+            tabCycle?.cancel()
+            tabCycle = nil
+            tab = value
+        } label: {
             HStack(spacing: 5) {
                 Image(systemName: symbol)
                 if let count { Text("\(count)").monospacedDigit() }

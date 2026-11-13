@@ -129,9 +129,13 @@ On the left, the album playing. These tabs change with every album:
 | Speech bubbles | Community page of the artist playing | Posts listed, when there are any |
 | Cart | Merch of the artist playing | Items still available |
 
-Their numbers show without opening them, as soon as the album starts. When the artist changes
-while the Merch or Community tab is open, and the new artist has nothing to show there, the
-panel goes to the (i) tab.
+Their numbers show without opening them, as soon as the album starts.
+
+At each new track, while one of these tabs is open, the panel goes through them by itself,
+fading from one to the next: the (i) tab first, then Community after 30 seconds, then Merch 30
+seconds later. On a short track, the next track starts the cycle again. A tab with nothing to
+show is skipped: no community page or posts, or no merch still available. Click a tab to stop
+this until the next track. While one of your library tabs is open, the panel stays on it.
 
 On the right, your library. These tabs don't change with the music:
 
