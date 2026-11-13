@@ -9,6 +9,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             PlayerWindow.restore()
             // Picks up artists followed or unfollowed on Bandcamp since the last launch.
             await ArtistStore.shared.refresh()
+            await FollowedFanStore.shared.refresh()
         }
     }
 
@@ -37,6 +38,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 case "dislike": player.dislikeCurrent()
                 case "like": player.likeCurrent()
                 case "favorites": player.favoritesOnly.toggle()
+                case "fansmix": player.fansMix.toggle()
+                case "randomfan": player.shuffleRandomFan()
                 case "signin": BandcampSession.shared.signIn()
                 case "collection":
                     // randamp://collection?user=name shuffles in that fan's collection;

@@ -26,7 +26,7 @@ enum LoginItem {
     }
 }
 
-/// The "…" menu of the menu bar window: Favorites, Radio, Open at login, the Bandcamp session, and Quit.
+/// The "…" menu of the menu bar window: Favorites, Fans Mix, Radio, Open at login, the Bandcamp session, and Quit.
 struct AppMenu: View {
     @State private var openAtLogin = LoginItem.isEnabled
     @ObservedObject private var player = Player.shared
@@ -35,6 +35,7 @@ struct AppMenu: View {
     var body: some View {
         Menu {
             Toggle("Favorites", isOn: $player.favoritesOnly)
+            Toggle("Fans Mix", isOn: $player.fansMix)
             Toggle("Radio", isOn: $player.radio)
                 .disabled(player.favoritesOnly)
             Divider()

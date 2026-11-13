@@ -5,7 +5,7 @@ import SwiftUI
 /// bio, shows, fan comments), their community page and their merch. On the right, your library:
 /// the artists to pick from, the tracks given a thumbs up or down, and the history.
 struct ArtistsView: View {
-    enum Tab: String { case artists, likes, dislikes, history, artist, merch, community }
+    enum Tab: String { case artists, fans, likes, dislikes, history, artist, merch, community }
 
     @ObservedObject var store = ArtistStore.shared
     @ObservedObject var dislikes = DislikeStore.shared
@@ -17,6 +17,7 @@ struct ArtistsView: View {
     @ObservedObject var session = BandcampSession.shared
     @ObservedObject var history = HistoryStore.shared
     @ObservedObject var likes = LikeStore.shared
+    @ObservedObject var fans = FollowedFanStore.shared
     @State private var input = ""
     @State private var isWorking = false
     @State private var error: String?
@@ -48,6 +49,8 @@ struct ArtistsView: View {
                 tabGroup {
                     tabButton(.artists, symbol: "person.2", count: store.artists.count,
                               name: "Your artists")
+                    tabButton(.fans, symbol: "person.crop.circle", count: fans.fans.count,
+                              name: "Fans you follow")
                     tabButton(.likes, symbol: "hand.thumbsup", count: likes.tracks.count,
                               name: "Your thumbs up")
                     tabButton(.dislikes, symbol: "hand.thumbsdown", count: dislikes.tracks.count,
@@ -97,6 +100,7 @@ struct ArtistsView: View {
         case .dislikes: dislikesTab
         case .history: HistoryView()
         case .likes: LikedView()
+        case .fans: FansView()
         case .artist: ArtistInfoView()
         case .merch: MerchView()
         case .community: CommunityView()

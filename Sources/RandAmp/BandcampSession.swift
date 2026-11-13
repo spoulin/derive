@@ -192,6 +192,49 @@ extension BandcampSession {
         }
         return nil
     }
+
+    /// Follows or unfollows a fan on Bandcamp, as the Follow button of their profile does.
+    /// Returns whether you follow them afterwards, or nil when it didn't work.
+    func setFollowingFan(_ follow: Bool, fanID followID: Int, username: String) async -> Bool? {
+        if fanID == nil { _ = await readUsername() }
+        guard isSignedIn, let fanID else { return nil }
+        let base = URL(string: "https://bandcamp.com")!
+        // Their profile, read with the session, carries the "crumb" token the follow needs.
+        let page = URL(string: "https://bandcamp.com/\(username)")!
+        guard let cookies = await cookieHeader(for: base) else { return nil }
+        var pageRequest = URLRequest(url: page)
+        pageRequest.httpShouldHandleCookies = false
+        pageRequest.setValue(cookies, forHTTPHeaderField: "Cookie")
+        let html = (try? await Bandcamp.session.data(for: pageRequest)).map { String(decoding: $0.0, as: UTF8.self) } ?? ""
+        let crumbs = Bandcamp.attribute("data-crumbs", in: html)
+            .flatMap { try? JSONSerialization.jsonObject(with: Data($0.utf8)) as? [String: String] } ?? [:]
+        var crumb = crumbs["fan_follow_cb"]
+
+        for _ in 0..<3 {
+            var request = URLRequest(url: base.appendingPathComponent("fan_follow_cb"))
+            request.httpMethod = "POST"
+            request.httpShouldHandleCookies = false
+            request.setValue(cookies, forHTTPHeaderField: "Cookie")
+            request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+            request.setValue(base.absoluteString, forHTTPHeaderField: "Origin")
+            request.setValue(page.absoluteString, forHTTPHeaderField: "Referer")
+            var form = URLComponents()
+            form.queryItems = [URLQueryItem(name: "fan_id", value: "\(fanID)"),
+                               URLQueryItem(name: "follow_id", value: "\(followID)"),
+                               URLQueryItem(name: "action", value: follow ? "follow" : "unfollow")]
+            if let crumb { form.queryItems?.append(URLQueryItem(name: "crumb", value: crumb)) }
+            request.httpBody = form.percentEncodedQuery?.data(using: .utf8)
+            guard let (data, _) = try? await Bandcamp.session.data(for: request),
+                  let answer = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
+            if answer["error"] as? String == "invalid_crumb", let fresh = answer["crumb"] as? String {
+                crumb = fresh
+                continue
+            }
+            guard answer["ok"] as? Bool == true else { return nil }
+            return answer["is_following"] as? Bool ?? follow
+        }
+        return nil
+    }
 }
 
 extension BandcampSession: WKNavigationDelegate {

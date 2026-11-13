@@ -34,6 +34,7 @@ RandAmp was called Dérive until version 1.0.
 - The merch of the artist playing
 - The artist's community page: new releases to play, listening parties, recent supporters
 - Shuffle in a fan's collection, from a supporter or a fan comment, and back to yours in a click
+- Follow fans on Bandcamp, list them, shuffle in a random one's collection, or mix all their collections
 
 ## Install
 
@@ -218,6 +219,7 @@ On the right, your library. These tabs don't change with the music:
 | Icon | Tab | Number |
 | --- | --- | --- |
 | People | Artists to pick from | Artists in the list |
+| Person in a circle | Fans you follow on Bandcamp | Fans |
 | Thumbs up | Tracks given a thumbs up | Tracks |
 | Thumbs down | Tracks given a thumbs down | Tracks |
 | Clock | History of the tracks played | Tracks played today |
@@ -315,6 +317,32 @@ Click **Back to mine** in the banner to return to your artists, with a new rando
 away. Playing an artist from your list, a new release from Community, or turning on Favorites
 also brings you back. The collection isn't kept: at launch, RandAmp is back with your artists.
 
+## Fans you follow
+
+Like artists, fans can be followed on Bandcamp, to find their collection again. Signed in to
+Bandcamp (see [Signing in to Bandcamp](#signing-in-to-bandcamp)):
+
+- in someone's collection, click **Follow** in the blue banner;
+- or right-click a recent supporter (Community tab) or a fan comment ((i) tab), and choose
+  **Follow on Bandcamp**.
+
+It's a real follow on Bandcamp: the fan shows on your Bandcamp profile too, and fans followed on
+Bandcamp's site show in RandAmp. The **Fans** tab of the side panel lists them, read from your
+profile at launch and when the tab opens (the arrow reads them again). Signed out, the list comes
+from the profile linked in the Artists tab, and following needs a sign-in.
+
+In the Fans tab:
+
+- Click a fan's picture to shuffle in their collection, as above. A speaker marks the fan
+  playing.
+- **Random Fan** picks one of them at random and shuffles in their collection.
+- **Fans mix** takes each album from the collection of a fan you follow, picked at random: one
+  fan's album, then another fan's. A banner shows whose collection the album comes from;
+  **Back to mine** turns the mix off. Radio works in the mix too. Fans mix is also in the "…"
+  menu, and stays on from one launch to the next. Favorites, someone's collection, or playing an
+  artist or a new release turns it off.
+- Right-click a fan to open their Bandcamp page or unfollow them.
+
 ## Merch
 
 The **Merch** tab of the side panel shows what the artist playing sells on Bandcamp: CDs,
@@ -375,6 +403,8 @@ The app handles `randamp://` URLs while it is running:
 | `randamp://dislike` | Thumbs down on the current track |
 | `randamp://like` | Thumbs up on the current track, or remove it |
 | `randamp://favorites` | Turn Favorites on or off |
+| `randamp://fansmix` | Turn Fans mix on or off |
+| `randamp://randomfan` | Shuffle in the collection of a fan you follow, picked at random |
 | `randamp://collection?user=name` | Shuffle in a fan's collection; `randamp://collection` alone goes back to yours |
 | `randamp://signin` | Open the Bandcamp sign-in window |
 | `randamp://artist?url=name.bandcamp.com` | Play a random album by that artist (radio off) |

@@ -82,6 +82,7 @@ struct PlayerView: View {
     var body: some View {
         VStack(spacing: 10) {
             if guest.isActive { guestBanner }
+            if player.fansMix { fansMixBanner }
             // In a tall or wide window, the cover, the timeline, the controls and the titles stay
             // together, centered; only the footer stays at the bottom.
             Spacer(minLength: 0)
@@ -148,9 +149,48 @@ struct PlayerView: View {
                     .font(.caption2).foregroundStyle(.secondary).lineLimit(1)
             }
             Spacer(minLength: 4)
+            if let fanID = guest.fanID, let username = guest.username {
+                FanFollowButton(fanID: fanID, username: username, name: guest.name, avatarURL: guest.avatarURL)
+            }
             Button("Back to mine") { player.leaveCollection() }
                 .controlSize(.small)
                 .help("Leave this collection and shuffle your own artists again")
+        }
+        .font(style == .menu ? .caption : .callout)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 7)
+        .background(Color.accentColor.opacity(0.28), in: RoundedRectangle(cornerRadius: 8))
+        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.accentColor.opacity(0.6)))
+    }
+
+    /// The fans mix, while it's on: whose collection the album comes from, and the way out.
+    private var fansMixBanner: some View {
+        HStack(spacing: 8) {
+            let side: CGFloat = style == .menu ? 22 : 30
+            let fan = player.mixFan
+            FanAvatar(url: fan?.avatarURL, side: side)
+            VStack(alignment: .leading, spacing: 1) {
+                if let fan {
+                    Button { NSWorkspace.shared.open(fan.profileURL) } label: {
+                        Text("From \(fan.name)'s collection").fontWeight(.semibold).lineLimit(1)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Open their Bandcamp page")
+                } else {
+                    Text("Fans mix").fontWeight(.semibold).lineLimit(1)
+                }
+                let count = FollowedFanStore.shared.fans.count
+                Text(count == 1 ? "Mixing the collection of the fan you follow"
+                                : "Mixing the collections of the \(count) fans you follow")
+                    .font(.caption2).foregroundStyle(.secondary).lineLimit(1)
+            }
+            Spacer(minLength: 4)
+            Button("Back to mine") {
+                player.fansMix = false
+                player.nextAlbum()
+            }
+            .controlSize(.small)
+            .help("Turn off the fans mix and shuffle your own artists again")
         }
         .font(style == .menu ? .caption : .callout)
         .padding(.horizontal, 10)

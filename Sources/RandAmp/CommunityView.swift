@@ -250,6 +250,12 @@ func shuffleCollection(_ profileURL: URL?, avatar: URL? = nil) {
 func fanMenu(_ profileURL: URL?, avatar: URL? = nil) -> some View {
     Button("Shuffle Their Collection") { shuffleCollection(profileURL, avatar: avatar) }
     Button("Open on Bandcamp") { if let url = profileURL { NSWorkspace.shared.open(url) } }
+    Divider()
+    let username = profileURL.flatMap { Following.username(from: $0.absoluteString) }
+    let followed = FollowedFanStore.shared.fans.contains { $0.username == username }
+    Button(followed ? "Unfollow on Bandcamp" : "Follow on Bandcamp") {
+        Task { await toggleFollowing(profileURL, avatar: avatar) }
+    }
 }
 
 /// A recent supporter's picture. On hover, a play glyph says that a click plays their collection.

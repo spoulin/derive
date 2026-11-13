@@ -74,6 +74,8 @@ final class GuestCollection: ObservableObject {
     static let shared = GuestCollection()
 
     @Published private(set) var username: String?
+    /// Bandcamp's ID for this fan, to follow them.
+    @Published private(set) var fanID: Int?
     @Published private(set) var name = ""
     @Published private(set) var avatarURL: URL?
     @Published private(set) var total = 0
@@ -96,6 +98,7 @@ final class GuestCollection: ObservableObject {
             return false
         }
         self.username = username
+        fanID = first.fanID
         name = first.name
         avatarURL = first.photoURL ?? avatar
         total = first.total
@@ -121,6 +124,7 @@ final class GuestCollection: ObservableObject {
         guard username != nil else { return }
         let previous = name
         username = nil
+        fanID = nil
         name = ""
         avatarURL = nil
         total = 0

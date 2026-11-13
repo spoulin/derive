@@ -36,7 +36,7 @@ final class Player: ObservableObject {
             UserDefaults.standard.set(favoritesOnly, forKey: "favoritesOnly")
             upcoming = nil
             guard favoritesOnly != oldValue else { return }
-            if favoritesOnly { guest.leave() }
+            if favoritesOnly { guest.leave(); fansMix = false }
             if favoritesOnly, likes.tracks.isEmpty {
                 favoritesOnly = false
                 Toast.shared.show("No thumbs up yet: give tracks a thumbs up to play your favorites",
@@ -48,6 +48,28 @@ final class Player: ObservableObject {
                               symbol: favoritesOnly ? "heart.fill" : "heart")
         }
     }
+
+    /// Fans mix: each album comes from the collection of a fan you follow, picked at random.
+    @Published var fansMix = UserDefaults.standard.bool(forKey: "fansMix") {
+        didSet {
+            UserDefaults.standard.set(fansMix, forKey: "fansMix")
+            upcoming = nil
+            if !fansMix { mixFan = nil }
+            guard fansMix != oldValue else { return }
+            if fansMix { guest.leave(announce: false); favoritesOnly = false }
+            if fansMix, FollowedFanStore.shared.fans.isEmpty {
+                fansMix = false
+                Toast.shared.show("You follow no fans yet: follow some from Community or a fan's collection",
+                                  symbol: "person.2")
+                return
+            }
+            Toast.shared.show(fansMix ? "Fans mix on: albums from the collections of the fans you follow"
+                                      : "Fans mix off: back to your artists",
+                              symbol: fansMix ? "person.2.fill" : "house")
+        }
+    }
+    /// In the fans mix, the fan whose collection the album playing comes from.
+    @Published private(set) var mixFan: FollowedFan?
 
     static let shared = Player()
 
@@ -165,6 +187,7 @@ final class Player: ObservableObject {
         guest.leave()
         radio = false
         favoritesOnly = false
+        fansMix = false
         player.pause()
         Task { await startRandomAlbum(only: artist) }
     }
@@ -175,6 +198,7 @@ final class Player: ObservableObject {
         guest.leave()
         radio = false
         favoritesOnly = false
+        fansMix = false
         player.pause()
         Task {
             guard !isLoading else { return }
@@ -279,6 +303,11 @@ final class Player: ObservableObject {
             errorMessage = "Couldn't play from \(guest.name)'s collection"
             return
         }
+        if chosen == nil, fansMix {
+            if let pick = await randomFanMixPick(excluding: excluded) { return start(pick) }
+            errorMessage = "Couldn't play from the collections of the fans you follow"
+            return
+        }
         if chosen == nil, favoritesOnly {
             if let pick = await randomFavorite() { return start(pick) }
             errorMessage = likes.tracks.isEmpty ? "No thumbs up yet" : "Bandcamp isn't answering right now. Try again in a little while."
@@ -326,7 +355,7 @@ final class Player: ObservableObject {
         currentArtist = pick.artist
         index = pick.index
         playCurrent()
-        if radio, !favoritesOnly, !guest.isActive { prefetch() }
+        if radio, !favoritesOnly, !guest.isActive, !fansMix { prefetch() }
     }
 
     private var guest: GuestCollection { .shared }
@@ -334,6 +363,7 @@ final class Player: ObservableObject {
     /// Shuffles in a fan's public collection instead of your artists, until you leave it.
     func shuffleCollection(of username: String, avatar: URL? = nil) {
         favoritesOnly = false
+        fansMix = false
         Task {
             guard await guest.enter(username, avatar: avatar) else { return }
             player.pause()
@@ -348,12 +378,39 @@ final class Player: ObservableObject {
         nextAlbum()
     }
 
-    /// A random release of the fan's collection: a random track of it in radio mode, its first
-    /// track otherwise. Avoiding repeats, one not heard lately when there is one.
+    /// Shuffles in the collection of a fan you follow, picked at random (not the one playing).
+    func shuffleRandomFan() {
+        guard let fan = FollowedFanStore.shared.randomFan(excluding: guest.username) else {
+            Toast.shared.show("You follow no fans yet", symbol: "person.2")
+            return
+        }
+        shuffleCollection(of: fan.username, avatar: fan.avatarURL)
+    }
+
+    /// The fans mix: a fan you follow at random, then a release of their collection.
+    private func randomFanMixPick(excluding excluded: URL? = nil) async -> Pick? {
+        let store = FollowedFanStore.shared
+        // A few tries: a collection may be private, empty, or not answer.
+        for fan in store.fans.shuffled().prefix(3) {
+            let items = await store.collection(of: fan)
+            if let pick = await randomCollectionPick(from: items, excluding: excluded) {
+                mixFan = fan
+                return pick
+            }
+        }
+        return nil
+    }
+
     private func randomGuestPick(excluding excluded: URL? = nil) async -> Pick? {
+        await randomCollectionPick(from: guest.items, excluding: excluded)
+    }
+
+    /// A random release of a fan's collection: a random track of it in radio mode, its first
+    /// track otherwise. Avoiding repeats, one not heard lately when there is one.
+    private func randomCollectionPick(from collection: [CollectionItem], excluding excluded: URL? = nil) async -> Pick? {
         let recentAlbums = history.recentAlbums
         let recentTracks = history.recentTrackIDs
-        let items = guest.items.filter { $0.url != excluded }
+        let items = collection.filter { $0.url != excluded }
         let fresh = items.filter { !recentAlbums.contains($0.url) }
         // A few tries: a release may have no audio, or be gone.
         for item in (fresh.isEmpty ? items : fresh).shuffled().prefix(4) {
@@ -537,8 +594,8 @@ final class Player: ObservableObject {
         while index < album.tracks.count, dislikes.contains(album.tracks[index].id) { index += 1 }
         if index < album.tracks.count {
             playCurrent()
-        } else if guest.isActive {
-            // Album finished, in someone's collection: another album of theirs.
+        } else if guest.isActive || fansMix {
+            // Album finished, in someone's collection or the fans mix: another album from there.
             Task { await startRandomAlbum(excluding: album.pageURL) }
         } else if let currentArtist {
             // Album finished: another random album by the same artist.
