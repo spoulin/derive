@@ -11,13 +11,19 @@ on:
   push:
     tags: ["v*"]
   workflow_dispatch:
+    inputs:
+      runner:
+        description: "Machine: macos-15 (Apple silicon) or macos-15-intel. Both build the same universal app."
+        default: macos-15
 
 permissions:
   contents: write
 
 jobs:
   release:
-    runs-on: macos-15
+    # A tag always builds on macos-15; a run by hand can pick macos-15-intel, for instance when
+    # GitHub has no Apple silicon machine free.
+    runs-on: ${{ inputs.runner || 'macos-15' }}
     steps:
       - uses: actions/checkout@v4
         with:
