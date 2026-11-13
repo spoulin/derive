@@ -41,9 +41,19 @@ choose, and plays its tracks in order. Add as many artists or labels as you like
    <img src="Resources/install-dmg.png" width="440" alt="The Dérive disk image: drag Dérive onto Applications">
 
 3. Open Dérive from Applications. The first time, macOS says it can't check it, because it
-   doesn't come from the App Store or from a developer known to Apple. Click **Done**.
-4. Open **System Settings › Privacy & Security**, scroll down to the message about Dérive, and
-   click **Open Anyway**. Confirm with your password or Touch ID.
+   doesn't come from the App Store or from a developer known to Apple. Click **Done**, not Move
+   to Trash.
+
+   <img src="Resources/install-not-opened.png" width="260" alt="macOS: Derive.app Not Opened, with Move to Trash and Done">
+
+4. Open **System Settings › Privacy & Security**, scroll down to **Security**, and click
+   **Open Anyway** next to the message about Dérive. Confirm with your password or Touch ID,
+   then click **Open Anyway** once more.
+
+   <img src="Resources/install-open-anyway.png" width="470" alt="System Settings, Privacy & Security: Derive.app was blocked to protect your Mac, Open Anyway">
+
+   Clicked Move to Trash by mistake? Open `Derive.dmg` again, drag Dérive onto Applications,
+   and start over at step 3.
 
 That's needed once only: afterwards, Dérive opens like any other app, at login too. Dérive lives
 in the menu bar: look for its icon at the top right of the screen.
