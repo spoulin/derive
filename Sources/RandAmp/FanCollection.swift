@@ -67,8 +67,8 @@ enum FanCollection {
     }
 }
 
-/// Someone else's collection, while Dérive shuffles in it instead of your artists. Not saved:
-/// at launch, Dérive is back in your own collection.
+/// Someone else's collection, while RandAmp shuffles in it instead of your artists. Not saved:
+/// at launch, RandAmp is back in your own collection.
 @MainActor
 final class GuestCollection: ObservableObject {
     static let shared = GuestCollection()

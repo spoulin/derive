@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// Handles derive:// URLs (e.g. from a Stream Deck) and reopens the player window at launch.
-/// sonnov:// still works, from when the app was called Sonnov.
+/// Handles randamp:// URLs (e.g. from a Stream Deck) and reopens the player window at launch.
+/// derive:// and sonnov:// still work, from when the app was called Dérive, then Sonnov.
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         Task { @MainActor in
@@ -19,7 +19,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func application(_ application: NSApplication, open urls: [URL]) {
-        for url in urls where url.scheme == "derive" || url.scheme == "sonnov" {
+        for url in urls where ["randamp", "derive", "sonnov"].contains(url.scheme) {
             Task { @MainActor in
                 let player = Player.shared
                 switch url.host {
@@ -39,8 +39,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 case "favorites": player.favoritesOnly.toggle()
                 case "signin": BandcampSession.shared.signIn()
                 case "collection":
-                    // derive://collection?user=name shuffles in that fan's collection;
-                    // derive://collection alone goes back to your own artists.
+                    // randamp://collection?user=name shuffles in that fan's collection;
+                    // randamp://collection alone goes back to your own artists.
                     let value = URLComponents(url: url, resolvingAgainstBaseURL: false)?
                         .queryItems?.first { $0.name == "user" }?.value
                     if let user = value.flatMap(Following.username(from:)) {
@@ -49,7 +49,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                         player.leaveCollection()
                     }
                 case "artist":
-                    // derive://artist?url=name.bandcamp.com plays that artist, listed or not.
+                    // randamp://artist?url=name.bandcamp.com plays that artist, listed or not.
                     let value = URLComponents(url: url, resolvingAgainstBaseURL: false)?
                         .queryItems?.first { $0.name == "url" }?.value ?? ""
                     guard let site = ArtistStore.siteURL(from: value) else { break }
@@ -64,7 +64,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 }
 
 @main
-struct DeriveApp: App {
+struct RandAmpApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var delegate
     @StateObject private var player = Player.shared
 
@@ -82,21 +82,39 @@ struct DeriveApp: App {
     }
 }
 
-/// The app was called Sonnov, with bundle ID com.stephanepoulin.sonnov. On first launch under the
-/// new ID, copies its settings (artists, player window) so nothing is lost. The old file is left as is.
+/// The app was called Dérive (com.stephanepoulin.derive), and Sonnov (com.stephanepoulin.sonnov)
+/// before that. On first launch under the new ID, copies the settings of the most recent one
+/// (artists, likes, history, player window) and Dérive's Bandcamp session, so nothing is lost and
+/// no new sign-in is needed. The old files are left as they are.
 enum SettingsMigration {
-    private static let oldDomain = "com.stephanepoulin.sonnov"
-    private static let doneKey = "migratedFromSonnov"
+    private static let oldIDs = ["com.stephanepoulin.derive", "com.stephanepoulin.sonnov"]
+    private static let doneKey = "migratedToRandAmp"
 
     static func run() {
         let defaults = UserDefaults.standard
         guard !defaults.bool(forKey: doneKey) else { return }
         defaults.set(true, forKey: doneKey)
-        // Nothing to copy, or settings already exist under the new ID.
+        // Settings already exist under the new ID: nothing to copy.
         guard defaults.object(forKey: "artists") == nil,
-              let old = defaults.persistentDomain(forName: oldDomain) else { return }
+              let oldID = oldIDs.first(where: { defaults.persistentDomain(forName: $0) != nil }),
+              let old = defaults.persistentDomain(forName: oldID) else { return }
         for (key, value) in old where !key.hasPrefix("NSStatusItem") {
             defaults.set(value, forKey: key)
+        }
+        copyWebsiteData(from: oldID)
+    }
+
+    /// The sign-in window keeps Bandcamp's cookies in WebKit's folders, named after the bundle ID.
+    /// Runs before any web view exists, so WebKit opens the copies.
+    private static func copyWebsiteData(from oldID: String) {
+        guard let newID = Bundle.main.bundleIdentifier else { return }
+        let files = FileManager.default
+        let library = files.homeDirectoryForCurrentUser.appendingPathComponent("Library")
+        for (folder, suffix) in [("WebKit", ""), ("HTTPStorages", ""), ("HTTPStorages", ".binarycookies")] {
+            let old = library.appendingPathComponent(folder).appendingPathComponent(oldID + suffix)
+            let new = library.appendingPathComponent(folder).appendingPathComponent(newID + suffix)
+            guard files.fileExists(atPath: old.path), !files.fileExists(atPath: new.path) else { continue }
+            try? files.copyItem(at: old, to: new)
         }
     }
 }

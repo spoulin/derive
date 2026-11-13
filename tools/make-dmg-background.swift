@@ -1,4 +1,4 @@
-// Draws the background of the Dérive disk image: where to drag the app, and what to do the
+// Draws the background of the RandAmp disk image: where to drag the app, and what to do the
 // first time macOS asks about it. Same warm-to-dark colors as the icon.
 // Usage: swift tools/make-dmg-background.swift <output.png> <scale>   (1 or 2, for Retina)
 import AppKit
@@ -43,7 +43,7 @@ func draw(_ text: String, size: CGFloat, weight: NSFont.Weight, alpha: CGFloat, 
     string.draw(in: NSRect(x: 30, y: height - y - h, width: width - 60, height: h), withAttributes: attrs)
 }
 
-draw("Drag Dérive to Applications", size: 20, weight: .semibold, alpha: 0.95, y: 22)
+draw("Drag RandAmp to Applications", size: 20, weight: .semibold, alpha: 0.95, y: 22)
 
 // A light band behind the icons: Finder writes their names in black, unreadable on dark.
 let band = NSRect(x: 40, y: height - 248, width: width - 80, height: 186)

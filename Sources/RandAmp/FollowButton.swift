@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Follow or unfollow the artist (or label) on Bandcamp, with your session. Signed out, it opens
-/// the sign-in window. The followed list in Dérive changes right away.
+/// the sign-in window. The followed list in RandAmp changes right away.
 struct FollowButton: View {
     let site: URL
     let name: String

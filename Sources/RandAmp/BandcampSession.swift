@@ -3,7 +3,7 @@ import SwiftUI
 import WebKit
 
 /// Your own Bandcamp session, opened by signing in on bandcamp.com in a window of the app.
-/// Dérive never sees the password: you type it in Bandcamp's own page, and the session
+/// RandAmp never sees the password: you type it in Bandcamp's own page, and the session
 /// cookies stay in the app's web data. They are sent only with the community page requests,
 /// where Bandcamp shows the artist's messages to signed-in followers.
 @MainActor

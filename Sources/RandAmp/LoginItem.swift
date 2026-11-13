@@ -1,7 +1,7 @@
 import ServiceManagement
 import SwiftUI
 
-/// Opens Dérive when the user logs in, through macOS login items (System Settings ›
+/// Opens RandAmp when the user logs in, through macOS login items (System Settings ›
 /// General › Login Items). macOS keeps the setting, not the app.
 enum LoginItem {
     static var isEnabled: Bool { SMAppService.mainApp.status == .enabled }
@@ -20,7 +20,7 @@ enum LoginItem {
         }
         if enabled, SMAppService.mainApp.status == .requiresApproval {
             SMAppService.openSystemSettingsLoginItems()
-            return "Allow Dérive in System Settings › Login Items."
+            return "Allow RandAmp in System Settings › Login Items."
         }
         return nil
     }
@@ -48,7 +48,7 @@ struct AppMenu: View {
             Divider()
             AboutMenuItems()
             Divider()
-            Button("Quit Dérive") { NSApplication.shared.terminate(nil) }
+            Button("Quit RandAmp") { NSApplication.shared.terminate(nil) }
         } label: {
             Image(systemName: "ellipsis.circle")
         }

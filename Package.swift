@@ -2,7 +2,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "Derive",
+    name: "RandAmp",
     platforms: [.macOS(.v13)],
-    targets: [.executableTarget(name: "Derive", path: "Sources/Derive")]
+    targets: [.executableTarget(name: "RandAmp", path: "Sources/RandAmp")]
 )

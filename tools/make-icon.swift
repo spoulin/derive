@@ -1,4 +1,4 @@
-// Draws the Dérive app icon: a record with a winding dotted path drifting across it,
+// Draws the RandAmp app icon: a record with a winding dotted path drifting across it,
 // on a warm-to-dark gradient like the player window's tint.
 // Usage: swift tools/make-icon.swift <output.png>   (1024 x 1024)
 import AppKit

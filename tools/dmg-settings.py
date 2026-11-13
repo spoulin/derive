@@ -1,8 +1,8 @@
-# Layout of the Dérive disk image, for dmgbuild (https://dmgbuild.readthedocs.io).
-# Used by tools/make-dmg.sh: dmgbuild -s tools/dmg-settings.py -D app=... -D background=... "Dérive" out.dmg
+# Layout of the RandAmp disk image, for dmgbuild (https://dmgbuild.readthedocs.io).
+# Used by tools/make-dmg.sh: dmgbuild -s tools/dmg-settings.py -D app=... -D background=... "RandAmp" out.dmg
 import os
 
-app = defines.get("app", "Derive.app")  # noqa: F821 (dmgbuild provides `defines`)
+app = defines.get("app", "RandAmp.app")  # noqa: F821 (dmgbuild provides `defines`)
 background = defines.get("background")  # noqa: F821
 
 format = "UDZO"

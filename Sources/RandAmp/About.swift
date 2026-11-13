@@ -9,13 +9,13 @@ enum AppInfo {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.0.0"
     }
 
-    static let releasesPage = URL(string: "https://github.com/spoulin/derive/releases/latest")!
+    static let releasesPage = URL(string: "https://github.com/spoulin/randamp/releases/latest")!
 }
 
-/// "Dérive 1.2.0" and "Check for Updates…", for the "…" menus.
+/// "RandAmp 1.2.0" and "Check for Updates…", for the "…" menus.
 struct AboutMenuItems: View {
     var body: some View {
-        Button("Dérive \(AppInfo.version)") {}
+        Button("RandAmp \(AppInfo.version)") {}
             .disabled(true)
         Button("Check for Updates…") { NSWorkspace.shared.open(AppInfo.releasesPage) }
     }

@@ -1,7 +1,7 @@
 import AppKit
 import MediaPlayer
 
-/// Makes Dérive the "Now Playing" app of macOS: the media keys (play/pause, next) reach it, and
+/// Makes RandAmp the "Now Playing" app of macOS: the media keys (play/pause, next) reach it, and
 /// Control Center shows the track, the artist and the cover.
 @MainActor
 enum NowPlaying {

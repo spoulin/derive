@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 
 /// Community tab: the latest posts on the Bandcamp community page of the artist playing, and the
-/// fans who bought something lately. New releases play in Dérive; messages only signed-in
+/// fans who bought something lately. New releases play in RandAmp; messages only signed-in
 /// followers can read are gathered in one line that opens the page on Bandcamp.
 struct CommunityView: View {
     @ObservedObject private var player = Player.shared
@@ -119,7 +119,7 @@ struct CommunityView: View {
                         Button("Sign in to Bandcamp to read them") { session.signIn() }
                             .buttonStyle(.link)
                             .font(.caption)
-                            .help("Opens Bandcamp's sign-in page in a window. Dérive keeps the session, never the password.")
+                            .help("Opens Bandcamp's sign-in page in a window. RandAmp keeps the session, never the password.")
                     }
                 }
                 Spacer(minLength: 0)

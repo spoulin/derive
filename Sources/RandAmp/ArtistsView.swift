@@ -321,8 +321,8 @@ struct ArtistsView: View {
                     showAdd = false
                     session.signIn()
                 }
-                .help("Opens Bandcamp's sign-in page. Signed in, Dérive links your profile by itself.")
-                Text("Signed in, Dérive plays the artists you follow, and shows their messages in Community. Or, without signing in:")
+                .help("Opens Bandcamp's sign-in page. Signed in, RandAmp links your profile by itself.")
+                Text("Signed in, RandAmp plays the artists you follow, and shows their messages in Community. Or, without signing in:")
                     .font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }

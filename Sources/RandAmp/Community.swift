@@ -14,7 +14,7 @@ struct Community: Equatable {
 
     struct Story: Equatable, Identifiable {
         enum Kind: Equatable {
-            /// A new album or track, playable in Dérive.
+            /// A new album or track, playable in RandAmp.
             case release(title: String, artist: String?, artURL: URL?, url: URL?, featuredTrack: String?,
                          preorder: Bool)
             /// A listening party on Bandcamp Live.

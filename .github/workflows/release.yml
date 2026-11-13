@@ -1,4 +1,4 @@
-# Builds Dérive for Apple silicon and Intel Macs and makes Derive.dmg.
+# Builds RandAmp for Apple silicon and Intel Macs and makes RandAmp.dmg.
 # - A tag like v1.2.0 (git tag v1.2.0 && git push origin v1.2.0) publishes a GitHub release with
 #   the disk image, so the README's Download link gets the new version.
 # - Run by hand (Actions › Release › Run workflow), it only builds the disk image, to check it:
@@ -26,7 +26,7 @@ jobs:
         with:
           fetch-depth: 0 # build.sh counts the commits for the build number
 
-      - name: Build Dérive for Apple silicon and Intel
+      - name: Build RandAmp for Apple silicon and Intel
         run: |
           if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then export VERSION="${GITHUB_REF_NAME#v}"; fi
           UNIVERSAL=1 ./build.sh
@@ -35,19 +35,19 @@ jobs:
         run: |
           python3 -m venv "$RUNNER_TEMP/venv"
           "$RUNNER_TEMP/venv/bin/pip" install --quiet dmgbuild
-          PATH="$RUNNER_TEMP/venv/bin:$PATH" tools/make-dmg.sh Derive.app Derive.dmg
+          PATH="$RUNNER_TEMP/venv/bin:$PATH" tools/make-dmg.sh RandAmp.app RandAmp.dmg
 
       - name: Publish the release
         if: github.ref_type == 'tag'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" Derive.dmg \
-            --title "Dérive ${GITHUB_REF_NAME#v}" --generate-notes
+          gh release create "$GITHUB_REF_NAME" RandAmp.dmg \
+            --title "RandAmp ${GITHUB_REF_NAME#v}" --generate-notes
 
       - name: Keep the disk image of a run by hand
         if: github.ref_type != 'tag'
         uses: actions/upload-artifact@v4
         with:
-          name: Derive.dmg
-          path: Derive.dmg
+          name: RandAmp.dmg
+          path: RandAmp.dmg

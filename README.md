@@ -1,15 +1,17 @@
-<img src="Resources/AppIcon.png" width="128" alt="Dérive app icon">
+<img src="Resources/AppIcon.png" width="128" alt="RandAmp app icon">
 
-# Dérive
+# RandAmp
 
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-support-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/stephanepoulin)
 
-[![Download Dérive for macOS](https://img.shields.io/badge/Download-D%C3%A9rive%20for%20macOS-C2416E?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/spoulin/derive/releases/latest/download/Derive.dmg)
+[![Download RandAmp for macOS](https://img.shields.io/badge/Download-RandAmp%20for%20macOS-C2416E?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/spoulin/randamp/releases/latest/download/RandAmp.dmg)
 
 For macOS 13 or later, on Apple silicon and Intel Macs. See [Install](#install).
 
 Menu bar app for macOS. Press play and it picks a random album from the Bandcamp artists you
 choose, and plays its tracks in order. Add as many artists or labels as you like.
+
+RandAmp was called Dérive until version 1.0.
 
 ## Features
 
@@ -35,27 +37,27 @@ choose, and plays its tracks in order. Add as many artists or labels as you like
 
 ## Install
 
-1. Click **Download** above to get `Derive.dmg`, then open it.
-2. Drag Dérive onto Applications.
+1. Click **Download** above to get `RandAmp.dmg`, then open it.
+2. Drag RandAmp onto Applications.
 
-   <img src="Resources/install-dmg.png" width="440" alt="The Dérive disk image: drag Dérive onto Applications">
+   <img src="Resources/install-dmg.png" width="440" alt="The RandAmp disk image: drag RandAmp onto Applications">
 
-3. Open Dérive from Applications. The first time, macOS says it can't check it, because it
+3. Open RandAmp from Applications. The first time, macOS says it can't check it, because it
    doesn't come from the App Store or from a developer known to Apple. Click **Done**, not Move
    to Trash.
 
-   <img src="Resources/install-not-opened.png" width="260" alt="macOS: Derive.app Not Opened, with Move to Trash and Done">
+   <img src="Resources/install-not-opened.png" width="260" alt="macOS: RandAmp.app Not Opened, with Move to Trash and Done">
 
 4. Open **System Settings › Privacy & Security**, scroll down to **Security**, and click
-   **Open Anyway** next to the message about Dérive. Confirm with your password or Touch ID,
+   **Open Anyway** next to the message about RandAmp. Confirm with your password or Touch ID,
    then click **Open Anyway** once more.
 
-   <img src="Resources/install-open-anyway.png" width="470" alt="System Settings, Privacy & Security: Derive.app was blocked to protect your Mac, Open Anyway">
+   <img src="Resources/install-open-anyway.png" width="470" alt="System Settings, Privacy & Security: RandAmp.app was blocked to protect your Mac, Open Anyway">
 
-   Clicked Move to Trash by mistake? Open `Derive.dmg` again, drag Dérive onto Applications,
+   Clicked Move to Trash by mistake? Open `RandAmp.dmg` again, drag RandAmp onto Applications,
    and start over at step 3.
 
-That's needed once only: afterwards, Dérive opens like any other app, at login too. Dérive lives
+That's needed once only: afterwards, RandAmp opens like any other app, at login too. RandAmp lives
 in the menu bar: look for its icon at the top right of the screen.
 
 To update, choose **Check for Updates…** in a "…" menu: it opens the page of the latest version.
@@ -68,7 +70,7 @@ Requires macOS 13+ and Swift 5.9+.
 
 ```sh
 ./build.sh
-open Derive.app
+open RandAmp.app
 ```
 
 To install it in Applications, or to update the installed copy:
@@ -78,17 +80,17 @@ To install it in Applications, or to update the installed copy:
 ```
 
 This builds the app, quits the copy that is running, moves the new one to
-`/Applications/Derive.app` and opens it. Only one copy is kept, so `derive://` links always reach
+`/Applications/RandAmp.app` and opens it. Only one copy is kept, so `randamp://` links always reach
 the installed app. Your artists and settings stay as they were.
 
-To open Dérive when you log in, click **…** at the bottom right of the menu bar window and
+To open RandAmp when you log in, click **…** at the bottom right of the menu bar window and
 choose **Open at Login**. It appears in System Settings › General › Login Items, where you can
-also turn it off. **Quit Dérive** is in the same menu.
+also turn it off. **Quit RandAmp** is in the same menu.
 
 ### Releases
 
 A version tag publishes a release: the Release workflow (`.github/workflows/release.yml`) builds
-Dérive for Apple silicon and Intel, makes `Derive.dmg` and attaches it to a GitHub release, which
+RandAmp for Apple silicon and Intel, makes `RandAmp.dmg` and attaches it to a GitHub release, which
 the Download link above always points to.
 
 ```sh
@@ -124,7 +126,7 @@ turns radio mode off, so the album plays to the end, followed by other albums by
 ### Artists you follow on Bandcamp
 
 The simplest way: click **Sign In to Bandcamp…**, in the empty list or in the **+** panel, and
-sign in. Dérive links your profile by itself (see [Signing in to Bandcamp](#signing-in-to-bandcamp)).
+sign in. RandAmp links your profile by itself (see [Signing in to Bandcamp](#signing-in-to-bandcamp)).
 
 Without signing in: click **+** and paste your Bandcamp profile, for example
 `bandcamp.com/yourname`: the app sees it is a profile and links it. The profile must be public.
@@ -237,7 +239,7 @@ For a label, the photo, bio and shows are the label's.
 
 Signed in to Bandcamp, the **Follow** button on the artist's photo (and at the top of the
 Community tab) follows the artist or label on Bandcamp, as the button of their page does. They
-join your followed artists in Dérive right away. **Following** shows the ones you follow: point at
+join your followed artists in RandAmp right away. **Following** shows the ones you follow: point at
 it and click to unfollow, which removes them from your followed artists. Signed out, the button
 opens the sign-in window.
 
@@ -253,7 +255,7 @@ have one:
 Click a supporter to shuffle in their collection (see [Someone else's collection](#someone-elses-collection));
 right-click one to open their Bandcamp page.
 
-Click the cover of a new release (a play glyph shows on hover) to play it in Dérive, from its first track; radio mode turns off
+Click the cover of a new release (a play glyph shows on hover) to play it in RandAmp, from its first track; radio mode turns off
 so the whole release plays.
 
 Bandcamp shows the text of the artist's messages only to followers signed in on Bandcamp.
@@ -263,15 +265,15 @@ read them on Bandcamp.
 
 ### Signing in to Bandcamp
 
-Signing in does two things: Dérive links your profile by itself, so it plays the artists you
+Signing in does two things: RandAmp links your profile by itself, so it plays the artists you
 follow, and it shows their messages in the Community tab. Click **Sign In to Bandcamp…** in the
 empty artist list, in the + panel or in a "…" menu, or **Sign in to Bandcamp to read them** in
 the Community tab. Bandcamp's own sign-in page opens in a window of the app; it closes by itself
 once you're signed in.
 
-- You type your password in Bandcamp's page: Dérive never sees it.
+- You type your password in Bandcamp's page: RandAmp never sees it.
 - When Bandcamp emails you to confirm a new device, don't click the link in the email: it would
-  confirm your browser, not Dérive. Copy the link, paste it in the field at the bottom of the
+  confirm your browser, not RandAmp. Copy the link, paste it in the field at the bottom of the
   sign-in window and click **Open**.
 - The session stays in the app's web data, and is sent only when reading community pages on
   bandcamp.com.
@@ -311,7 +313,7 @@ to play your thumbs up.
 
 Click **Back to mine** in the banner to return to your artists, with a new random pick right
 away. Playing an artist from your list, a new release from Community, or turning on Favorites
-also brings you back. The collection isn't kept: at launch, Dérive is back with your artists.
+also brings you back. The collection isn't kept: at launch, RandAmp is back with your artists.
 
 ## Merch
 
@@ -342,7 +344,7 @@ or off, on top or not, thumbs up or down. It fades out after a few seconds.
 
 ## Media keys and Control Center
 
-The media keys of the keyboard control Dérive while it is the app playing:
+The media keys of the keyboard control RandAmp while it is the app playing:
 
 | Key | Pressed | Held down |
 | --- | --- | --- |
@@ -353,40 +355,41 @@ The media keys of the keyboard control Dérive while it is the app playing:
 Control Center's Now Playing shows the track, the artist and the cover.
 
 On a Stream Deck, a media key held a little long counts as held down. For a next track every time,
-use a `derive://next` link instead (see below).
+use a `randamp://next` link instead (see below).
 
 ## Remote control (Stream Deck, scripts)
 
-The app handles `derive://` URLs while it is running:
+The app handles `randamp://` URLs while it is running:
 
 | URL | Action |
 | --- | --- |
-| `derive://toggle` | Play / pause |
-| `derive://play` | Play |
-| `derive://pause` | Pause |
-| `derive://next` | Next track |
-| `derive://shuffle` | New random album |
-| `derive://window` | Open the player window |
-| `derive://panel` | Show or hide the side panel (`derive://artists` works too) |
-| `derive://radio` | Turn radio mode on |
-| `derive://album` | Turn radio mode off: play whole albums |
-| `derive://dislike` | Thumbs down on the current track |
-| `derive://like` | Thumbs up on the current track, or remove it |
-| `derive://favorites` | Turn Favorites on or off |
-| `derive://collection?user=name` | Shuffle in a fan's collection; `derive://collection` alone goes back to yours |
-| `derive://signin` | Open the Bandcamp sign-in window |
-| `derive://artist?url=name.bandcamp.com` | Play a random album by that artist (radio off) |
+| `randamp://toggle` | Play / pause |
+| `randamp://play` | Play |
+| `randamp://pause` | Pause |
+| `randamp://next` | Next track |
+| `randamp://shuffle` | New random album |
+| `randamp://window` | Open the player window |
+| `randamp://panel` | Show or hide the side panel (`randamp://artists` works too) |
+| `randamp://radio` | Turn radio mode on |
+| `randamp://album` | Turn radio mode off: play whole albums |
+| `randamp://dislike` | Thumbs down on the current track |
+| `randamp://like` | Thumbs up on the current track, or remove it |
+| `randamp://favorites` | Turn Favorites on or off |
+| `randamp://collection?user=name` | Shuffle in a fan's collection; `randamp://collection` alone goes back to yours |
+| `randamp://signin` | Open the Bandcamp sign-in window |
+| `randamp://artist?url=name.bandcamp.com` | Play a random album by that artist (radio off) |
 
-From a terminal: `open -g derive://toggle` (`-g` keeps the app in the background).
+From a terminal: `open -g randamp://toggle` (`-g` keeps the app in the background).
 
-The app was called Sonnov before: `sonnov://` links still work, and its settings are kept.
+The app was called Dérive, and Sonnov before that: `derive://` and `sonnov://` links still work, and
+its settings and Bandcamp session are kept.
 
 In Stream Deck, add a **Website** action (System category) with the URL, or an action that runs the
 command above.
 
 ## Support
 
-If Dérive saves you from picking the next album yourself, you can buy me a coffee.
+If RandAmp saves you from picking the next album yourself, you can buy me a coffee.
 
 <a href="https://buymeacoffee.com/stephanepoulin"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me a Coffee" height="40"></a>
 
