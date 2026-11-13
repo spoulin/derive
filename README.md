@@ -22,6 +22,7 @@ choose, and plays its tracks in order. Add as many artists or labels as you like
 - Open the current album on Bandcamp
 - The artist playing: photo, bio, upcoming shows and what fans wrote about the album
 - The merch of the artist playing
+- The artist's community page: new releases to play, listening parties, recent supporters
 
 ## Build
 
@@ -120,7 +121,10 @@ On the left, the album playing. These tabs change with every album:
 | Icon | Tab | Number |
 | --- | --- | --- |
 | (i) | The artist playing | Upcoming shows, when there are any |
+| Speech bubbles | Community page of the artist playing | Posts listed, when there are any |
 | Cart | Merch of the artist playing | Items still available |
+
+Their numbers show without opening them, as soon as the album starts.
 
 On the right, your library. These tabs don't change with the music:
 
@@ -128,8 +132,6 @@ On the right, your library. These tabs don't change with the music:
 | --- | --- | --- |
 | People | Artists to pick from | Artists in the list |
 | Thumbs down | Tracks given a thumbs down | Tracks |
-
-The numbers of the last two tabs show without opening them, as soon as the album starts.
 
 ## Artist playing
 
@@ -140,8 +142,44 @@ The **(i)** tab shows who plays the album playing, read from its Bandcamp page:
 - the album: release date, tags, text and credits, and the comments fans left on it, with their
   favorite track.
 
-For a label, the photo, bio and shows are the label's. Messages artists post on their
-Bandcamp community page aren't shown: Bandcamp shows them only to signed-in followers.
+For a label, the photo, bio and shows are the label's.
+
+## Community
+
+The **Community** tab shows the artist's Bandcamp community page (/community), for artists who
+have one:
+
+- the fans who bought something lately; click one to open their Bandcamp profile;
+- the latest posts: new releases, listening parties and messages from the artist, with their date,
+  likes and comments.
+
+Click the cover of a new release to play it in Dérive, from its first track; radio mode turns off
+so the whole release plays.
+
+Bandcamp shows the text of the artist's messages only to followers signed in on Bandcamp.
+Signed out, these messages are gathered in one line at the top of the posts: how many there are
+and when the latest came, marked **New** when it is less than two weeks old. Click the arrow to
+read them on Bandcamp.
+
+### Signing in to Bandcamp
+
+Signing in does two things: Dérive links your profile by itself, so it plays the artists you
+follow, and it shows their messages in the Community tab. Click **Sign In to Bandcamp…** in the
+empty artist list, in the + panel or in a "…" menu, or **Sign in to Bandcamp to read them** in
+the Community tab. Bandcamp's own sign-in page opens in a window of the app; it closes by itself
+once you're signed in.
+
+- You type your password in Bandcamp's page: Dérive never sees it.
+- When Bandcamp emails you to confirm a new device, don't click the link in the email: it would
+  confirm your browser, not Dérive. Copy the link, paste it in the field at the bottom of the
+  sign-in window and click **Open**.
+- The session stays in the app's web data, and is sent only when reading community pages on
+  bandcamp.com.
+- When a profile is linked already, signing in doesn't change it.
+- **Sign Out of Bandcamp** in a "…" menu removes the session from the app. The linked profile
+  stays: unlink it in the "…" menu of the artist list.
+- Signed in, the messages of artists you don't follow stay locked: follow them on Bandcamp to
+  read them.
 
 ## Merch
 
@@ -185,6 +223,7 @@ The app handles `derive://` URLs while it is running:
 | `derive://radio` | Turn radio mode on |
 | `derive://album` | Turn radio mode off: play whole albums |
 | `derive://dislike` | Thumbs down on the current track |
+| `derive://signin` | Open the Bandcamp sign-in window |
 | `derive://artist?url=name.bandcamp.com` | Play a random album by that artist (radio off) |
 
 From a terminal: `open -g derive://toggle` (`-g` keeps the app in the background).

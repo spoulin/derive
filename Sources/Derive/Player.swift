@@ -89,6 +89,26 @@ final class Player: ObservableObject {
         Task { await startRandomAlbum(only: artist) }
     }
 
+    /// Plays one release from its first track (skipping thumbs down), and turns radio mode off so
+    /// the whole release plays. Used by the Community tab's new releases.
+    func playAlbum(at url: URL, by artist: Artist) {
+        radio = false
+        player.pause()
+        Task {
+            guard !isLoading else { return }
+            isLoading = true
+            errorMessage = nil
+            defer { isLoading = false }
+            guard let album = try? await Bandcamp.album(at: url),
+                  let first = album.tracks.indices.first(where: { !dislikes.contains(album.tracks[$0].id) })
+            else {
+                errorMessage = "Couldn't play this release"
+                return
+            }
+            start(Pick(album: album, artist: artist, index: first))
+        }
+    }
+
     /// Plays one track given a thumbs down, to check it before undoing it.
     /// Afterwards, playback goes on as usual (the rest of its album, or radio).
     func playDisliked(_ track: DislikedTrack) {

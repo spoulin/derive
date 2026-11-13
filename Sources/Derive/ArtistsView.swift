@@ -2,10 +2,10 @@ import AppKit
 import SwiftUI
 
 /// Panel of the player window, with two groups of tabs: the artist playing (photo, bio, shows,
-/// fan comments) and their merch on the left; your library, the artists to pick from and the
+/// fan comments), their community page and their merch on the left; your library, the artists to pick from and the
 /// tracks given a thumbs down, on the right.
 struct ArtistsView: View {
-    enum Tab: String { case artists, dislikes, artist, merch }
+    enum Tab: String { case artists, dislikes, artist, merch, community }
 
     @ObservedObject var store = ArtistStore.shared
     @ObservedObject var dislikes = DislikeStore.shared
@@ -13,6 +13,8 @@ struct ArtistsView: View {
     @ObservedObject var player = Player.shared
     @ObservedObject var merch = MerchStore.shared
     @ObservedObject var info = ArtistInfoStore.shared
+    @ObservedObject var community = CommunityStore.shared
+    @ObservedObject var session = BandcampSession.shared
     @State private var input = ""
     @State private var isWorking = false
     @State private var error: String?
@@ -33,6 +35,9 @@ struct ArtistsView: View {
                 tabGroup {
                     tabButton(.artist, symbol: "info.circle", count: showCount,
                               name: showCount.map { "Artist playing · \($0) upcoming shows" } ?? "Artist playing")
+                    tabButton(.community, symbol: "bubble.left.and.bubble.right", count: communityPosts,
+                              name: communityPosts.map { "Community of the artist playing · \($0) posts" }
+                                  ?? "Community of the artist playing")
                     tabButton(.merch, symbol: "cart", count: merchCount, name: "Merch of the artist playing")
                 }
                 Spacer()
@@ -49,6 +54,7 @@ struct ArtistsView: View {
             case .dislikes: dislikesTab
             case .artist: ArtistInfoView()
             case .merch: MerchView()
+            case .community: CommunityView()
             }
         }
         .padding(16)
@@ -56,7 +62,10 @@ struct ArtistsView: View {
         // Loads the merch of the artist playing while the panel is open, so the Merch tab
         // shows its count without being opened.
         .task(id: player.currentArtist?.url) {
-            if let site = player.currentArtist?.url { await merch.load(site) }
+            guard let site = player.currentArtist?.url else { return }
+            async let merchLoaded: Void = merch.load(site)
+            async let communityLoaded: Void = community.load(site)
+            _ = await (merchLoaded, communityLoaded)
         }
         .task(id: player.pageURL) {
             if let page = player.pageURL { await info.load(page) }
@@ -68,6 +77,14 @@ struct ArtistsView: View {
         guard let page = player.pageURL, case .loaded(let artist) = info.state(for: page),
               !artist.shows.isEmpty else { return nil }
         return artist.shows.count
+    }
+
+    /// Posts listed in the Community tab for the artist playing (messages only followers can
+    /// read included), when there are any.
+    private var communityPosts: Int? {
+        guard let site = player.currentArtist?.url, case .loaded(let page?) = community.state(for: site),
+              !page.stories.isEmpty else { return nil }
+        return page.stories.count
     }
 
     /// Items the artist playing still sells (sold out left out); none while loading, or when
@@ -108,8 +125,13 @@ struct ArtistsView: View {
         List {
             if store.artists.isEmpty && store.profile == nil {
                 HStack(alignment: .top) {
-                    Text("No artists yet. Click + to add an artist, or your Bandcamp profile to play the artists you follow.")
-                        .foregroundStyle(.secondary)
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("No artists yet. Sign in to Bandcamp to play the artists you follow, or click + to add an artist or your profile.")
+                            .foregroundStyle(.secondary)
+                        if !session.isSignedIn {
+                            Button("Sign In to Bandcamp…") { session.signIn() }
+                        }
+                    }
                     Spacer()
                     artistsToolbar
                 }
@@ -191,8 +213,9 @@ struct ArtistsView: View {
                 Task { await player.checkPlayability(of: store.artists) }
             }
             .disabled(player.checkProgress != nil || store.artists.isEmpty)
+            Divider()
+            BandcampSessionButton()
             if store.profile != nil {
-                Divider()
                 Button("Unlink…") { confirmUnlink = true }
             }
         } label: {
@@ -206,6 +229,16 @@ struct ArtistsView: View {
     /// One field for both: an artist's site, or a Bandcamp profile to link.
     private var addForm: some View {
         VStack(alignment: .leading, spacing: 8) {
+            if store.profile == nil && !session.isSignedIn {
+                Button("Sign In to Bandcamp…") {
+                    showAdd = false
+                    session.signIn()
+                }
+                .help("Opens Bandcamp's sign-in page. Signed in, Dérive links your profile by itself.")
+                Text("Signed in, Dérive plays the artists you follow, and shows their messages in Community. Or, without signing in:")
+                    .font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
             Text("Add an artist or a label, or link your Bandcamp profile to play the artists you follow.")
                 .font(.caption).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)

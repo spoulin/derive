@@ -26,7 +26,7 @@ enum LoginItem {
     }
 }
 
-/// The "…" menu of the menu bar window: Open at login, and Quit.
+/// The "…" menu of the menu bar window: Open at login, the Bandcamp session, and Quit.
 struct AppMenu: View {
     @State private var openAtLogin = LoginItem.isEnabled
     @State private var message: String?
@@ -39,6 +39,7 @@ struct AppMenu: View {
                     message = LoginItem.set(newValue)
                     openAtLogin = LoginItem.isEnabled
                 }))
+            BandcampSessionButton()
             Divider()
             Button("Quit Dérive") { NSApplication.shared.terminate(nil) }
         } label: {

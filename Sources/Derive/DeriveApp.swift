@@ -35,6 +35,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 case "radio": player.radio = true
                 case "album": player.radio = false
                 case "dislike": player.dislikeCurrent()
+                case "signin": BandcampSession.shared.signIn()
                 case "artist":
                     // derive://artist?url=name.bandcamp.com plays that artist, listed or not.
                     let value = URLComponents(url: url, resolvingAgainstBaseURL: false)?
