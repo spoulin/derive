@@ -55,14 +55,28 @@ struct PlayerView: View {
     @AppStorage(PlayerWindow.keepOnTopKey) private var keepOnTop = false
     @ObservedObject private var panel = ArtistsPanel.shared
 
+    /// Width of the cover in the window, so the timeline lines up with it.
+    @State private var coverWidth: CGFloat = 0
+
     var body: some View {
         VStack(spacing: 10) {
+            // In a tall or wide window, the cover, the timeline, the controls and the titles stay
+            // together, centered; only the footer stays at the bottom.
+            Spacer(minLength: 0)
             cover
+                .layoutPriority(1)
+                .background {
+                    GeometryReader { geo in
+                        Color.clear
+                            .onAppear { coverWidth = geo.size.width }
+                            .onChange(of: geo.size.width) { coverWidth = $0 }
+                    }
+                }
             TrackTimeline(compact: style == .menu)
-                .frame(maxWidth: style == .menu ? 192 : 520)
-                .padding(.horizontal, style == .menu ? 0 : 8)
+                .frame(width: style == .menu ? 192 : max(coverWidth, 200))
             controls
             status
+            Spacer(minLength: 0)
             Divider()
             footer
         }
@@ -90,9 +104,8 @@ struct PlayerView: View {
             }
             .clipShape(RoundedRectangle(cornerRadius: 6))
             // Menu: fixed-size slot, the menu bar window does not reliably resize with its content.
-            // Window: the cover grows with the window.
+            // Window: the cover takes the room left by the rest, as a square.
             .frame(width: style == .menu ? 192 : nil, height: style == .menu ? 192 : nil)
-            .frame(maxWidth: style == .window ? .infinity : nil, maxHeight: style == .window ? .infinity : nil)
         .overlay(alignment: .topTrailing) {
             if style == .menu {
                 Button { PlayerWindow.show() } label: {
