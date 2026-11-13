@@ -167,20 +167,32 @@ final class Player: ObservableObject {
     /// Plays one track given a thumbs down, to check it before undoing it.
     /// Afterwards, playback goes on as usual (the rest of its album, or radio).
     func playDisliked(_ track: DislikedTrack) {
+        playTrack(id: track.id, title: track.title, artist: track.artist, albumURL: track.albumURL)
+    }
+
+    /// Plays a track of the history again. Afterwards, playback goes on as usual.
+    func playAgain(_ track: PlayedTrack) {
+        playTrack(id: track.trackID, title: track.title, artist: track.artist, albumURL: track.albumURL)
+    }
+
+    private func playTrack(id: Int, title: String, artist name: String, albumURL: URL) {
         player.pause()
         Task {
             guard !isLoading else { return }
             isLoading = true
             errorMessage = nil
             defer { isLoading = false }
-            guard let album = try? await Bandcamp.album(at: track.albumURL),
-                  let index = album.tracks.firstIndex(where: { $0.id == track.id }),
-                  let site = ArtistStore.siteURL(from: track.albumURL.absoluteString)
+            guard let album = try? await Bandcamp.album(at: albumURL),
+                  let index = album.tracks.firstIndex(where: { $0.id == id }),
+                  let site = ArtistStore.siteURL(from: albumURL.absoluteString)
             else {
-                errorMessage = "Couldn't play \(track.title)"
+                errorMessage = "Couldn't play \(title)"
                 return
             }
-            start(Pick(album: album, artist: Artist(url: site, name: track.artist), index: index))
+            // The listed artist when there is one, so the artist tabs follow it.
+            let artist = ArtistStore.shared.artists.first { $0.url.host == site.host }
+                ?? Artist(url: site, name: name)
+            start(Pick(album: album, artist: artist, index: index))
         }
     }
 
@@ -190,11 +202,37 @@ final class Player: ObservableObject {
         let track = album.tracks[index]
         guard track.id != 0 else { return }
         dislikes.add(DislikedTrack(id: track.id, title: track.title, album: album.title,
-                                   artist: artist ?? "", albumURL: album.pageURL))
+                                   artist: artist ?? "", albumURL: album.pageURL, artURL: album.artURL))
+        likes.remove(track.id)
         advance()
     }
 
+    /// Bandcamp's ID of the track playing, for the thumbs up button.
+    var currentTrackID: Int? {
+        guard let album, index < album.tracks.count, album.tracks[index].id != 0 else { return nil }
+        return album.tracks[index].id
+    }
+
+    /// Thumbs up on the track playing, or off again when it has one. Playback goes on.
+    func likeCurrent() {
+        guard let album, index < album.tracks.count else { return }
+        let track = album.tracks[index]
+        guard track.id != 0 else { return }
+        if likes.contains(track.id) {
+            likes.remove(track.id)
+        } else {
+            likes.add(LikedTrack(id: track.id, title: track.title, album: album.title, artist: artist ?? "",
+                                 albumURL: album.pageURL, artURL: album.artURL, likedAt: Date()))
+        }
+    }
+
+    /// Plays a liked track again. Afterwards, playback goes on as usual.
+    func playLiked(_ track: LikedTrack) {
+        playTrack(id: track.id, title: track.title, artist: track.artist, albumURL: track.albumURL)
+    }
+
     private var dislikes: DislikeStore { .shared }
+    private var likes: LikeStore { .shared }
 
     /// - Parameters:
     ///   - chosen: picks from this artist only.
@@ -252,12 +290,24 @@ final class Player: ObservableObject {
 
     private func randomPick(from artists: [Artist], excluding excluded: URL? = nil,
                             skipMarked: Bool = true) async -> Pick? {
-        guard let (album, artist) = await randomAlbum(from: artists, excluding: excluded,
-                                                      skipMarked: skipMarked) else { return nil }
+        // With Avoid repeats on, first look past what played lately; when nothing else is left,
+        // play something again rather than nothing.
+        var found = await randomAlbum(from: artists, excluding: excluded, skipMarked: skipMarked,
+                                      avoidRecent: history.avoidRepeats)
+        if found == nil, history.avoidRepeats {
+            found = await randomAlbum(from: artists, excluding: excluded, skipMarked: skipMarked,
+                                      avoidRecent: false)
+        }
+        guard let (album, artist) = found else { return nil }
         let allowed = album.tracks.indices.filter { !dislikes.contains(album.tracks[$0].id) }
         guard let first = allowed.first else { return nil }
-        return Pick(album: album, artist: artist, index: radio ? allowed.randomElement()! : first)
+        guard radio else { return Pick(album: album, artist: artist, index: first) }
+        let recent = history.recentTrackIDs
+        let fresh = allowed.filter { !recent.contains(album.tracks[$0].id) }
+        return Pick(album: album, artist: artist, index: (fresh.isEmpty ? allowed : fresh).randomElement()!)
     }
+
+    private var history: HistoryStore { .shared }
 
     /// Picks the next radio track and downloads its cover in the background.
     private func prefetch() {
@@ -280,9 +330,17 @@ final class Player: ObservableObject {
     /// - Parameter skipMarked: leaves out artists found unplayable in the last week. False when
     ///   the user asked for this artist: it is tried anyway.
     private func randomAlbum(from artists: [Artist], excluding excluded: URL? = nil,
-                             skipMarked: Bool = true) async -> (Album, Artist)? {
+                             skipMarked: Bool = true, avoidRecent: Bool = false) async -> (Album, Artist)? {
         let candidates = skipMarked ? artists.filter { !playability.shouldSkip($0.url) } : artists
-        for artist in candidates.shuffled().prefix(3) {
+        var order = candidates.shuffled()
+        // Avoid repeats: the artist just heard goes last, so another one plays when there is one.
+        if avoidRecent, order.count > 1, let last = history.lastSite,
+           let position = order.firstIndex(where: { $0.url == last }) {
+            order.append(order.remove(at: position))
+        }
+        let recentTracks = avoidRecent ? history.recentTrackIDs : []
+        let recentAlbums = avoidRecent ? history.recentAlbums : []
+        for artist in order.prefix(3) {
             guard let site = await site(for: artist) else { continue }
             let releases = site.releases.filter { $0 != excluded }
             var empty = 0
@@ -291,8 +349,12 @@ final class Player: ObservableObject {
                 guard let album = try? await Bandcamp.album(at: release) else { continue }
                 if album.tracks.isEmpty { empty += 1; continue }
                 playability.clear(artist.url)
-                // Needs at least one track that wasn't disliked.
-                if album.tracks.contains(where: { !dislikes.contains($0.id) }) {
+                // Needs at least one track that wasn't disliked; avoiding repeats, one not heard
+                // lately in radio, or an album not heard lately otherwise.
+                let playable = album.tracks.filter { !dislikes.contains($0.id) }
+                let fresh = radio ? playable.contains { !recentTracks.contains($0.id) }
+                                  : !recentAlbums.contains(album.pageURL)
+                if !playable.isEmpty, fresh {
                     return (album, artist)
                 }
             }
@@ -371,6 +433,9 @@ final class Player: ObservableObject {
         nowPlaying = "\(album.title) — \(index + 1). \(track.title)"
         clock.elapsed = 0
         clock.duration = track.duration
+        history.add(PlayedTrack(trackID: track.id, title: track.title, album: album.title,
+                                artist: artist ?? "", albumURL: album.pageURL, artURL: album.artURL,
+                                site: currentArtist?.url, playedAt: Date()))
         player.replaceCurrentItem(with: AVPlayerItem(url: track.url))
         player.play()
         isPlaying = true

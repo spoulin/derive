@@ -11,7 +11,9 @@ choose, and plays its tracks in order. Add as many artists or labels as you like
 
 - Random album, played track by track
 - Radio mode: a new random album and track after each track
+- Thumbs up: keep the tracks you like in a list
 - Thumbs down: skip a track and never hear it again
+- History of the tracks played, and an option to avoid repeats
 - Media keys and Control Center's Now Playing
 - Your own list of Bandcamp artists and labels, each one turned on or off
 - Link your Bandcamp profile to play the artists and labels you follow, kept in sync
@@ -104,10 +106,17 @@ chance, then picks one of that artist's albums at random.
 ## Radio mode
 
 By default, the app plays the random album from its first track to its last. When the album ends,
-another random album by the same artist starts. To change artist, click shuffle. Click the radio
-button, left of shuffle, to turn on radio mode: after each track, the app picks a new artist and
-album at random, then plays a random track from it. The next track is picked while the current
-one plays, so there is no wait between tracks. Click the button again to go back to albums.
+another random album by the same artist starts. To change artist, click shuffle. Check **Radio**
+at the bottom of the player window (or in the "…" menu of the menu bar player) to turn on radio
+mode: after each track, the app picks a new artist and album at random, then plays a random track
+from it. The next track is picked while the current one plays, so there is no wait between
+tracks. Uncheck it to go back to albums.
+
+## Thumbs up
+
+Click the thumbs up, right of next, to keep the track playing in the **Liked** tab; it turns
+blue. Click it again to remove it. The Liked tab lists these tracks with their cover: click a
+cover or play to hear one again. A thumbs up removes a thumbs down, and the other way around.
 
 ## Thumbs down
 
@@ -142,7 +151,9 @@ On the right, your library. These tabs don't change with the music:
 | Icon | Tab | Number |
 | --- | --- | --- |
 | People | Artists to pick from | Artists in the list |
+| Thumbs up | Tracks given a thumbs up | Tracks |
 | Thumbs down | Tracks given a thumbs down | Tracks |
+| Clock | History of the tracks played | Tracks played today |
 
 ## Artist playing
 
@@ -191,6 +202,23 @@ once you're signed in.
   stays: unlink it in the "…" menu of the artist list.
 - Signed in, the messages of artists you don't follow stay locked: follow them on Bandcamp to
   read them.
+
+## History
+
+The **History** tab lists the last 300 tracks played, the last one first, with their cover and
+when they played. Click a cover or the play button to hear a track again, the arrow to open its album on Bandcamp, or
+the thumbs down to never play it again. **Clear…** empties the list.
+
+### Avoid repeats
+
+Every artist has the same chance at each pick, so the few tracks of an artist with a small
+catalog can come back often. Turn on **Avoid repeats**, at the top of the History tab, to skip:
+
+- in radio mode, the tracks heard in the last 24 hours;
+- in album mode, the albums heard in the last 24 hours;
+- the artist just heard.
+
+When nothing else can play, a track plays again rather than nothing. Off by default.
 
 ## Merch
 
@@ -247,6 +275,7 @@ The app handles `derive://` URLs while it is running:
 | `derive://radio` | Turn radio mode on |
 | `derive://album` | Turn radio mode off: play whole albums |
 | `derive://dislike` | Thumbs down on the current track |
+| `derive://like` | Thumbs up on the current track, or remove it |
 | `derive://signin` | Open the Bandcamp sign-in window |
 | `derive://artist?url=name.bandcamp.com` | Play a random album by that artist (radio off) |
 

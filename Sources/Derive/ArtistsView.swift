@@ -1,11 +1,11 @@
 import AppKit
 import SwiftUI
 
-/// Panel of the player window, with two groups of tabs: the artist playing (photo, bio, shows,
-/// fan comments), their community page and their merch on the left; your library, the artists to pick from and the
-/// tracks given a thumbs down, on the right.
+/// Panel of the player window, with two groups of tabs. On the left, the artist playing (photo,
+/// bio, shows, fan comments), their community page and their merch. On the right, your library:
+/// the artists to pick from, the tracks given a thumbs up or down, and the history.
 struct ArtistsView: View {
-    enum Tab: String { case artists, dislikes, artist, merch, community }
+    enum Tab: String { case artists, likes, dislikes, history, artist, merch, community }
 
     @ObservedObject var store = ArtistStore.shared
     @ObservedObject var dislikes = DislikeStore.shared
@@ -15,6 +15,8 @@ struct ArtistsView: View {
     @ObservedObject var info = ArtistInfoStore.shared
     @ObservedObject var community = CommunityStore.shared
     @ObservedObject var session = BandcampSession.shared
+    @ObservedObject var history = HistoryStore.shared
+    @ObservedObject var likes = LikeStore.shared
     @State private var input = ""
     @State private var isWorking = false
     @State private var error: String?
@@ -46,14 +48,23 @@ struct ArtistsView: View {
                 tabGroup {
                     tabButton(.artists, symbol: "person.2", count: store.artists.count,
                               name: "Your artists")
+                    tabButton(.likes, symbol: "hand.thumbsup", count: likes.tracks.count,
+                              name: "Your thumbs up")
                     tabButton(.dislikes, symbol: "hand.thumbsdown", count: dislikes.tracks.count,
                               name: "Your thumbs down")
+                    tabButton(.history, symbol: "clock.arrow.circlepath", count: history.playedToday,
+                              name: "History · \(history.playedToday) tracks played today")
                 }
             }
 
             // A ZStack, so a tab changed by the cycle fades into the next one.
             ZStack {
-                tabContent.id(tab).transition(.opacity)
+                // A column, as each tab's views go one under the other (a ZStack alone would
+                // lay them over each other).
+                VStack(alignment: .leading, spacing: 12) { tabContent }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                    .id(tab)
+                    .transition(.opacity)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         }
@@ -84,6 +95,8 @@ struct ArtistsView: View {
         switch tab {
         case .artists: artistsTab
         case .dislikes: dislikesTab
+        case .history: HistoryView()
+        case .likes: LikedView()
         case .artist: ArtistInfoView()
         case .merch: MerchView()
         case .community: CommunityView()
@@ -345,8 +358,12 @@ struct ArtistsView: View {
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         } else {
+            Text("These tracks are never played at random. Click play to listen to one, or the undo arrow to let it play again.")
+                .font(.caption).foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
             List(dislikes.tracks) { track in
                 HStack {
+                    CoverThumbnail(url: track.artURL)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(track.title)
                         Text("\(track.artist) — \(track.album)")
@@ -373,8 +390,6 @@ struct ArtistsView: View {
             }
             .scrollContentBackground(.hidden)
             .scrollIndicators(.never)
-            Text("These tracks are never played at random. Click play to listen to one, or the undo arrow to let it play again.")
-                .font(.caption).foregroundStyle(.secondary)
         }
     }
 

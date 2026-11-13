@@ -69,7 +69,8 @@ struct CommunityView: View {
     private func supporters(_ fans: [Community.Supporter]) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             sectionTitle("Recent supporters")
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 88), spacing: 8)], spacing: 14) {
+            // Top-aligned: a fan without a place has one line less, and must not sit lower.
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 88), spacing: 8, alignment: .top)], spacing: 14) {
                 ForEach(fans) { fan in
                     Button { if let url = fan.profileURL { NSWorkspace.shared.open(url) } } label: {
                         VStack(spacing: 6) {

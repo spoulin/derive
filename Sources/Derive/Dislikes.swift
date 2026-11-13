@@ -8,6 +8,8 @@ struct DislikedTrack: Codable, Identifiable, Equatable {
     let album: String
     let artist: String
     let albumURL: URL
+    /// The album cover, for the thumbnail. Missing in tracks saved before it was kept.
+    var artURL: URL? = nil
 }
 
 /// Tracks never to play again, saved in UserDefaults.

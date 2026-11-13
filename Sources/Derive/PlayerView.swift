@@ -53,6 +53,9 @@ struct PlayerView: View {
     let style: Style
     @ObservedObject private var player = Player.shared
     @AppStorage(PlayerWindow.keepOnTopKey) private var keepOnTop = false
+    @ObservedObject private var likes = LikeStore.shared
+
+    private var liked: Bool { player.currentTrackID.map(likes.contains) ?? false }
     @ObservedObject private var panel = ArtistsPanel.shared
 
     /// Width of the cover in the window, so the timeline lines up with it.
@@ -122,15 +125,13 @@ struct PlayerView: View {
     }
 
     private var controls: some View {
+        // Two buttons on each side of play: the thumbs at both ends.
         HStack(spacing: style == .menu ? 16 : 22) {
-            Button { player.radio.toggle() } label: {
-                Image(systemName: "dot.radiowaves.left.and.right")
-                    .font(.system(size: 15))
-                    .foregroundStyle(player.radio ? Color.accentColor : Color.secondary)
+            Button { player.dislikeCurrent() } label: {
+                Image(systemName: "hand.thumbsdown").font(.system(size: 15))
             }
-            .help(player.radio
-                  ? "Radio is on: a new random album after each track"
-                  : "Radio is off: the album plays to the end")
+            .help("Thumbs down: skip this track and never play it again")
+            .disabled(player.nowPlaying == nil)
 
             Button { player.nextAlbum() } label: {
                 Image(systemName: "shuffle").font(.system(size: 18))
@@ -148,11 +149,14 @@ struct PlayerView: View {
             .help(player.radio ? "Next random track" : "Next track")
             .disabled(player.nowPlaying == nil)
 
-            Button { player.dislikeCurrent() } label: {
-                Image(systemName: "hand.thumbsdown").font(.system(size: 15))
+            Button { player.likeCurrent() } label: {
+                Image(systemName: liked ? "hand.thumbsup.fill" : "hand.thumbsup")
+                    .font(.system(size: 15))
+                    .foregroundStyle(liked ? Color.accentColor : Color.primary)
             }
-            .help("Thumbs down: skip this track and never play it again")
-            .disabled(player.nowPlaying == nil)
+            .help(liked ? "You gave this track a thumbs up. Click to remove it."
+                        : "Thumbs up: keep this track in your Liked tab")
+            .disabled(player.currentTrackID == nil)
         }
         .buttonStyle(.plain)
         .padding(.horizontal, 8)
@@ -209,9 +213,14 @@ struct PlayerView: View {
             case .menu:
                 AppMenu()
             case .window:
-                Toggle("On top", isOn: $keepOnTop)
-                    .toggleStyle(.checkbox)
-                    .help("Keep this window above other apps")
+                HStack(spacing: 12) {
+                    Toggle("Radio", isOn: $player.radio)
+                        .toggleStyle(.checkbox)
+                        .help("Radio: a new random album and track after each track. Off: the album plays to the end.")
+                    Toggle("On top", isOn: $keepOnTop)
+                        .toggleStyle(.checkbox)
+                        .help("Keep this window above other apps")
+                }
             }
         }
         .buttonStyle(.plain).font(.caption)
