@@ -73,6 +73,29 @@ final class Player: ObservableObject {
         }
     }
 
+    private var scanTimer: Timer?
+
+    /// While a media key is held: moves 4 seconds every quarter second, forward (1) or back (-1).
+    func startScanning(_ direction: Double) {
+        stopScanning()
+        scanTimer = Timer.scheduledTimer(withTimeInterval: 0.25, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                guard let self else { return }
+                self.seek(to: self.clock.elapsed + direction * 4)
+            }
+        }
+    }
+
+    func stopScanning() {
+        scanTimer?.invalidate()
+        scanTimer = nil
+    }
+
+    /// The previous key: back to the start of the track (a random player has no previous track).
+    func restartTrack() {
+        seek(to: 0)
+    }
+
     /// Moves in the track playing, in seconds from its start.
     func seek(to seconds: Double) {
         guard player.currentItem != nil, clock.duration > 0 else { return }

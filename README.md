@@ -214,9 +214,18 @@ The window keeps its place and size, and comes back at launch if it was open whe
 
 ## Media keys and Control Center
 
-The play/pause and next keys of the keyboard control Dérive while it is the app playing. Control
-Center's Now Playing shows the track, the artist and the cover. There is no previous track: the
-previous key does nothing.
+The media keys of the keyboard control Dérive while it is the app playing:
+
+| Key | Pressed | Held down |
+| --- | --- | --- |
+| Play/pause | Play or pause | — |
+| Next | Next track | Moves fast forward in the track |
+| Previous | Back to the start of the track (there is no previous track) | Moves fast back in the track |
+
+Control Center's Now Playing shows the track, the artist and the cover.
+
+On a Stream Deck, a media key held a little long counts as held down. For a next track every time,
+use a `derive://next` link instead (see below).
 
 ## Remote control (Stream Deck, scripts)
 

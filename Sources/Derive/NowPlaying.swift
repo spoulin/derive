@@ -18,8 +18,22 @@ enum NowPlaying {
         handle(center.pauseCommand) { Player.shared.pause() }
         handle(center.togglePlayPauseCommand) { Player.shared.toggle() }
         handle(center.nextTrackCommand) { Player.shared.nextTrack() }
-        // There is no previous track in a random player.
-        center.previousTrackCommand.isEnabled = false
+        // There is no previous track in a random player: the previous key starts the track again.
+        handle(center.previousTrackCommand) { Player.shared.restartTrack() }
+        // A media key held down: on Apple keyboards, a press a bit long on ⏭ or ⏮ is a seek, not
+        // a next or previous track. Moves fast in the track while the key is held.
+        func scan(_ command: MPRemoteCommand, _ direction: Double) {
+            command.isEnabled = true
+            command.addTarget { event in
+                let begins = (event as? MPSeekCommandEvent)?.type == .beginSeeking
+                DispatchQueue.main.async {
+                    if begins { Player.shared.startScanning(direction) } else { Player.shared.stopScanning() }
+                }
+                return .success
+            }
+        }
+        scan(center.seekForwardCommand, 1)
+        scan(center.seekBackwardCommand, -1)
         // Moving in the track from Control Center's bar.
         center.changePlaybackPositionCommand.isEnabled = true
         center.changePlaybackPositionCommand.addTarget { event in
