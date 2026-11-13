@@ -52,7 +52,7 @@ RandAmp was called Dérive until version 1.0.
    **Open Anyway** next to the message about RandAmp. Confirm with your password or Touch ID,
    then click **Open Anyway** once more.
 
-   <img src="Resources/install-open-anyway.png" width="470" alt="System Settings, Privacy & Security: RandAmp.app was blocked to protect your Mac, Open Anyway">
+   <img src="Resources/install-open-anyway.png" width="440" alt="System Settings, Privacy & Security: RandAmp.app was blocked to protect your Mac, Open Anyway">
 
    Clicked Move to Trash by mistake? Open `RandAmp.dmg` again, drag RandAmp onto Applications,
    and start over at step 3.
