@@ -20,6 +20,8 @@ choose, and plays its tracks in order. Add as many artists or labels as you like
 - A player window that stays open, with a large cover, to keep on your desktop
 - Play/pause, next track, and shuffle (new random album)
 - Open the current album on Bandcamp
+- The artist playing: photo, bio, upcoming shows and what fans wrote about the album
+- The merch of the artist playing
 
 ## Build
 
@@ -107,6 +109,32 @@ Click the thumbs down to skip the current track and never play it again, in radi
 albums. The app remembers these tracks by their Bandcamp ID. To hear one again, click
 **Artists…**, open the **Thumbs down** tab and click the undo arrow next to it. Not sure it's the right track?
 Click its play button to listen to it first.
+
+## Panel tabs
+
+The panel next to the player has four tabs, each shown by an icon and a number. Point at a tab
+to see its name.
+
+| Icon | Tab | Number |
+| --- | --- | --- |
+| People | Artists to pick from | Artists in the list |
+| Thumbs down | Tracks given a thumbs down | Tracks |
+| (i) | The artist playing | Upcoming shows, when there are any |
+| Cart | Merch of the artist playing | Items still available |
+
+The numbers of the last two tabs show without opening them, as soon as the album starts.
+
+## Artist playing
+
+The **(i)** tab shows who plays the album playing, read from its Bandcamp page:
+
+- the artist's photo, name and city, bio and links;
+- upcoming shows, with the venue and the city; click one to open its page;
+- the album: release date, tags, text and credits, and the comments fans left on it, with their
+  favorite track.
+
+For a label, the photo, bio and shows are the label's. Messages artists post on their
+Bandcamp community page aren't shown: Bandcamp shows them only to signed-in followers.
 
 ## Merch
 

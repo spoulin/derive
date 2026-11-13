@@ -110,7 +110,7 @@ enum Bandcamp {
         return unescape(String(rest[..<end]))
     }
 
-    private static func unescape(_ text: String) -> String {
+    static func unescape(_ text: String) -> String {
         var out = text
         let regex = try! NSRegularExpression(pattern: "&#(x[0-9a-fA-F]+|[0-9]+);")
         for match in regex.matches(in: text, range: NSRange(text.startIndex..., in: text)).reversed() {

@@ -47,7 +47,7 @@ struct MerchView: View {
         let slides = available.isEmpty ? items : available
         return ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                Text("\(artist.name) on Bandcamp · \(items.count) items")
+                Text("\(artist.name) on Bandcamp · \(available.count) available · \(items.count) items")
                     .font(.caption).foregroundStyle(.secondary)
                 MerchSlideshow(items: slides, albumPath: player.pageURL?.path)
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 116), spacing: 12)], spacing: 14) {

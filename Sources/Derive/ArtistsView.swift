@@ -1,15 +1,17 @@
 import AppKit
 import SwiftUI
 
-/// Panel of the player window, with three tabs: the artists to pick from, the tracks given a
-/// thumbs down, and the merch of the artist playing.
+/// Panel of the player window, with four tabs: the artists to pick from, the tracks given a
+/// thumbs down, then the artist playing (photo, bio, shows, fan comments) and their merch.
 struct ArtistsView: View {
-    enum Tab: String { case artists, dislikes, merch }
+    enum Tab: String { case artists, dislikes, artist, merch }
 
     @ObservedObject var store = ArtistStore.shared
     @ObservedObject var dislikes = DislikeStore.shared
     @ObservedObject var playability = PlayabilityStore.shared
     @ObservedObject var player = Player.shared
+    @ObservedObject var merch = MerchStore.shared
+    @ObservedObject var info = ArtistInfoStore.shared
     @State private var input = ""
     @State private var isWorking = false
     @State private var error: String?
@@ -23,25 +25,73 @@ struct ArtistsView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Picker("Show", selection: $tab) {
-                    Text("Artists (\(store.artists.count))").tag(Tab.artists)
-                    Text("Thumbs down (\(dislikes.tracks.count))").tag(Tab.dislikes)
-                    Text("Merch").tag(Tab.merch)
+                // Icons and counts keep the bar short; the names are in the tooltips. A segmented
+                // Picker drops an icon mixed with text, so this is a row of buttons styled like one.
+                HStack(spacing: 2) {
+                    tabButton(.artists, symbol: "person.2", count: store.artists.count, name: "Artists")
+                    tabButton(.dislikes, symbol: "hand.thumbsdown", count: dislikes.tracks.count,
+                              name: "Thumbs down")
+                    tabButton(.artist, symbol: "info.circle", count: showCount,
+                              name: showCount.map { "Artist playing · \($0) upcoming shows" } ?? "Artist playing")
+                    tabButton(.merch, symbol: "cart", count: merchCount, name: "Merch")
                 }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .fixedSize()
+                .padding(2)
+                .background(.quaternary, in: RoundedRectangle(cornerRadius: 7))
                 Spacer()
             }
 
             switch tab {
             case .artists: artistsTab
             case .dislikes: dislikesTab
+            case .artist: ArtistInfoView()
             case .merch: MerchView()
             }
         }
         .padding(16)
         .frame(minHeight: 420)
+        // Loads the merch of the artist playing while the panel is open, so the Merch tab
+        // shows its count without being opened.
+        .task(id: player.currentArtist?.url) {
+            if let site = player.currentArtist?.url { await merch.load(site) }
+        }
+        .task(id: player.pageURL) {
+            if let page = player.pageURL { await info.load(page) }
+        }
+    }
+
+    /// Upcoming shows of the artist playing, when there are any.
+    private var showCount: Int? {
+        guard let page = player.pageURL, case .loaded(let artist) = info.state(for: page),
+              !artist.shows.isEmpty else { return nil }
+        return artist.shows.count
+    }
+
+    /// Items the artist playing still sells (sold out left out); none while loading, or when
+    /// nothing plays.
+    private var merchCount: Int? {
+        guard let site = player.currentArtist?.url,
+              case .loaded(let items) = merch.state(for: site) else { return nil }
+        return items.filter { !$0.soldOut }.count
+    }
+
+    private func tabButton(_ value: Tab, symbol: String, count: Int?, name: String) -> some View {
+        let selected = tab == value
+        return Button { tab = value } label: {
+            HStack(spacing: 5) {
+                Image(systemName: symbol)
+                if let count { Text("\(count)").monospacedDigit() }
+            }
+            .font(.callout.weight(selected ? .semibold : .regular))
+            .foregroundStyle(selected ? .white : .secondary)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 4)
+            .background(selected ? Color.accentColor : .clear, in: RoundedRectangle(cornerRadius: 5))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .help(name)
+        .accessibilityLabel(count.map { "\(name), \($0)" } ?? name)
+        .accessibilityAddTraits(selected ? .isSelected : [])
     }
 
     @ViewBuilder private var artistsTab: some View {
