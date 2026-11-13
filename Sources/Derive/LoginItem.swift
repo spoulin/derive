@@ -46,6 +46,8 @@ struct AppMenu: View {
                 }))
             BandcampSessionButton()
             Divider()
+            AboutMenuItems()
+            Divider()
             Button("Quit Dérive") { NSApplication.shared.terminate(nil) }
         } label: {
             Image(systemName: "ellipsis.circle")

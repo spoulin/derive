@@ -4,6 +4,10 @@
 
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-support-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/stephanepoulin)
 
+[![Download Dérive for macOS](https://img.shields.io/badge/Download-D%C3%A9rive%20for%20macOS-C2416E?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/spoulin/derive/releases/latest/download/Derive.dmg)
+
+For macOS 13 or later, on Apple silicon and Intel Macs. See [Install](#install).
+
 Menu bar app for macOS. Press play and it picks a random album from the Bandcamp artists you
 choose, and plays its tracks in order. Add as many artists or labels as you like.
 
@@ -29,6 +33,25 @@ choose, and plays its tracks in order. Add as many artists or labels as you like
 - The artist's community page: new releases to play, listening parties, recent supporters
 - Shuffle in a fan's collection, from a supporter or a fan comment, and back to yours in a click
 
+## Install
+
+1. Click **Download** above to get `Derive.dmg`, then open it.
+2. Drag Dérive onto Applications.
+
+   <img src="Resources/install-dmg.png" width="440" alt="The Dérive disk image: drag Dérive onto Applications">
+
+3. Open Dérive from Applications. The first time, macOS says it can't check it, because it
+   doesn't come from the App Store or from a developer known to Apple. Click **Done**.
+4. Open **System Settings › Privacy & Security**, scroll down to the message about Dérive, and
+   click **Open Anyway**. Confirm with your password or Touch ID.
+
+That's needed once only: afterwards, Dérive opens like any other app, at login too. Dérive lives
+in the menu bar: look for its icon at the top right of the screen.
+
+To update, choose **Check for Updates…** in a "…" menu: it opens the page of the latest version.
+Download it and drag it onto Applications again, replacing the old one. Your artists and settings
+stay as they were.
+
 ## Build
 
 Requires macOS 13+ and Swift 5.9+.
@@ -51,6 +74,22 @@ the installed app. Your artists and settings stay as they were.
 To open Dérive when you log in, click **…** at the bottom right of the menu bar window and
 choose **Open at Login**. It appears in System Settings › General › Login Items, where you can
 also turn it off. **Quit Dérive** is in the same menu.
+
+### Releases
+
+A version tag publishes a release: the Release workflow (`.github/workflows/release.yml`) builds
+Dérive for Apple silicon and Intel, makes `Derive.dmg` and attaches it to a GitHub release, which
+the Download link above always points to.
+
+```sh
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+To make the disk image on your Mac: `pip3 install dmgbuild`, then `UNIVERSAL=1 ./build.sh` and
+`tools/make-dmg.sh`. Its background is drawn by `tools/make-dmg-background.swift`, and its layout
+is in `tools/dmg-settings.py`. The app is signed ad hoc, not notarized, hence the Open Anyway
+step of the first launch.
 
 The app icon is drawn by `tools/make-icon.swift`. To change it, edit the script, then run
 `swift tools/make-icon.swift icon.png`, turn `icon.png` into `Resources/AppIcon.icns` with

@@ -303,6 +303,8 @@ struct ArtistsView: View {
             if store.profile != nil {
                 Button("Unlink…") { confirmUnlink = true }
             }
+            Divider()
+            AboutMenuItems()
         } label: {
             Image(systemName: "ellipsis.circle")
         }
