@@ -11,6 +11,23 @@ struct PlayerWindowContent: View {
         HStack(spacing: 0) {
             PlayerView(style: .window)
                 .frame(maxWidth: .infinity)
+                // The side panel's switch, discreet in the title bar, where macOS apps put it.
+                // Always grey: the panel itself shows whether it is open.
+                .overlay(alignment: .topTrailing) {
+                    Button { PlayerWindow.toggleArtists() } label: {
+                        Image(systemName: "sidebar.right")
+                            .font(.system(size: 14))
+                            .foregroundStyle(.secondary)
+                            .padding(5)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .help(panel.isOpen ? "Hide the side panel"
+                                       : "Show the side panel: the artist playing, your artists and your history")
+                    .padding(.top, 2)
+                    .padding(.trailing, 8)
+                    .ignoresSafeArea(edges: .top)
+                }
             if panel.isOpen {
                 ArtistsView()
                     .frame(width: ArtistsPanel.width)
@@ -54,6 +71,7 @@ struct PlayerView: View {
     @ObservedObject private var player = Player.shared
     @AppStorage(PlayerWindow.keepOnTopKey) private var keepOnTop = false
     @ObservedObject private var likes = LikeStore.shared
+    @ObservedObject private var guest = GuestCollection.shared
 
     private var liked: Bool { player.currentTrackID.map(likes.contains) ?? false }
     @ObservedObject private var panel = ArtistsPanel.shared
@@ -63,6 +81,7 @@ struct PlayerView: View {
 
     var body: some View {
         VStack(spacing: 10) {
+            if guest.isActive { guestBanner }
             // In a tall or wide window, the cover, the timeline, the controls and the titles stay
             // together, centered; only the footer stays at the bottom.
             Spacer(minLength: 0)
@@ -83,10 +102,61 @@ struct PlayerView: View {
             Divider()
             footer
         }
+        // Says what an action just did, over the bottom of the player.
+        .overlay(alignment: .bottom) {
+            ToastView(compact: style == .menu).padding(.bottom, style == .menu ? 34 : 40)
+        }
+        .onChange(of: keepOnTop) { onTop in
+            guard style == .window else { return }
+            Toast.shared.show(onTop ? "On top: this window stays above other apps"
+                                    : "Not on top: other apps can cover this window",
+                              symbol: onTop ? "pin.fill" : "pin.slash")
+        }
         .padding(14)
         .frame(width: style == .menu ? 220 : nil)
         .frame(minWidth: style == .window ? PlayerWindow.minPlayerWidth : nil,
                minHeight: style == .window ? 320 : nil)
+    }
+
+    /// While shuffling in someone else's collection: whose it is, and the way back.
+    private var guestBanner: some View {
+        HStack(spacing: 8) {
+            let side: CGFloat = style == .menu ? 22 : 30
+            Group {
+                if let avatar = guest.avatarURL {
+                    AsyncImage(url: avatar) { image in
+                        image.resizable().scaledToFill()
+                    } placeholder: {
+                        Circle().fill(.quaternary)
+                    }
+                } else {
+                    Image(systemName: "person.crop.circle.fill").resizable().foregroundStyle(.secondary)
+                }
+            }
+            .frame(width: side, height: side)
+            .clipShape(Circle())
+            VStack(alignment: .leading, spacing: 1) {
+                Button { if let url = guest.profileURL { NSWorkspace.shared.open(url) } } label: {
+                    Text("\(guest.name)'s collection").fontWeight(.semibold).lineLimit(1)
+                }
+                .buttonStyle(.plain)
+                .help("Open their Bandcamp page")
+                // The name is right above: no "their", which can read as plural.
+                Text(guest.items.count < guest.total
+                     ? "Shuffling \(guest.items.count) of \(guest.total) releases, more loading…"
+                     : "Shuffling all \(guest.total) releases")
+                    .font(.caption2).foregroundStyle(.secondary).lineLimit(1)
+            }
+            Spacer(minLength: 4)
+            Button("Back to mine") { player.leaveCollection() }
+                .controlSize(.small)
+                .help("Leave this collection and shuffle your own artists again")
+        }
+        .font(style == .menu ? .caption : .callout)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 7)
+        .background(Color.accentColor.opacity(0.28), in: RoundedRectangle(cornerRadius: 8))
+        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.accentColor.opacity(0.6)))
     }
 
     private var cover: some View {
@@ -201,12 +271,17 @@ struct PlayerView: View {
             .disabled(player.pageURL == nil)
             .help("Open the current album on Bandcamp")
             Spacer()
+            // The side panel holds more than the artists now: the artist playing, their community
+            // and merch, and your library. macOS's sidebar symbol, blue while open.
             switch style {
             case .menu:
-                Button("Artists…") { PlayerWindow.showArtists() }
-                    .help("Open the player window with the artist list")
+                Button { PlayerWindow.showArtists() } label: {
+                    Label("Panel", systemImage: "sidebar.right")
+                }
+                .help("Open the player window with its side panel: the artist playing, your artists and your history")
             case .window:
-                Button(panel.isOpen ? "Hide artists" : "Artists…") { PlayerWindow.toggleArtists() }
+                // In the window, the panel's switch is in the title bar.
+                EmptyView()
             }
             Spacer()
             switch style {
@@ -214,9 +289,19 @@ struct PlayerView: View {
                 AppMenu()
             case .window:
                 HStack(spacing: 12) {
+                    Toggle("Favorites", isOn: $player.favoritesOnly)
+                        .toggleStyle(.checkbox)
+                        .help(guest.isActive
+                              ? "Leaves \(guest.name)'s collection and plays your thumbs up."
+                              : "Favorites: each track is picked at random among your thumbs up.")
                     Toggle("Radio", isOn: $player.radio)
                         .toggleStyle(.checkbox)
-                        .help("Radio: a new random album and track after each track. Off: the album plays to the end.")
+                        .disabled(player.favoritesOnly)
+                        .help(player.favoritesOnly
+                              ? "Favorites already picks a new track each time."
+                              : guest.isActive
+                              ? "Radio: a random track of \(guest.name)'s collection after each track. Off: whole albums of their collection."
+                              : "Radio: a new random album and track after each track. Off: the album plays to the end.")
                     Toggle("On top", isOn: $keepOnTop)
                         .toggleStyle(.checkbox)
                         .help("Keep this window above other apps")

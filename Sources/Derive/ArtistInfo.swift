@@ -45,7 +45,7 @@ struct ArtistInfo: Equatable {
 
 extension Bandcamp {
     static func info(at page: URL) async throws -> ArtistInfo {
-        let (data, response) = try await URLSession.shared.data(from: page)
+        let (data, response) = try await Bandcamp.session.data(from: page)
         let html = String(decoding: data, as: UTF8.self)
         let base = response.url ?? page
 

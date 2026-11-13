@@ -46,6 +46,14 @@ final class PlayabilityStore: ObservableObject {
     init() {
         marks = UserDefaults.standard.data(forKey: Self.key)
             .flatMap { try? JSONDecoder().decode([String: Mark].self, from: $0) } ?? [:]
+        // Once: "no releases" marks made before error pages were told apart from artist pages
+        // were mostly wrong (Bandcamp refusing requests during a check). They are looked at again.
+        let fixedKey = "clearedWrongNoReleases"
+        if !UserDefaults.standard.bool(forKey: fixedKey) {
+            marks = marks.filter { $0.value.reason != .noReleases }
+            save() // Observers don't run in init.
+            UserDefaults.standard.set(true, forKey: fixedKey)
+        }
     }
 
     func reason(for url: URL) -> UnplayableReason? {

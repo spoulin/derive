@@ -11,7 +11,7 @@ choose, and plays its tracks in order. Add as many artists or labels as you like
 
 - Random album, played track by track
 - Radio mode: a new random album and track after each track
-- Thumbs up: keep the tracks you like in a list
+- Thumbs up: keep the tracks you like in a list, and play only them with Favorites
 - Thumbs down: skip a track and never hear it again
 - History of the tracks played, and an option to avoid repeats
 - Media keys and Control Center's Now Playing
@@ -26,6 +26,7 @@ choose, and plays its tracks in order. Add as many artists or labels as you like
 - The artist playing: photo, bio, upcoming shows and what fans wrote about the album
 - The merch of the artist playing
 - The artist's community page: new releases to play, listening parties, recent supporters
+- Shuffle in a fan's collection, from a supporter or a fan comment, and back to yours in a click
 
 ## Build
 
@@ -56,10 +57,12 @@ The app icon is drawn by `tools/make-icon.swift`. To change it, edit the script,
 
 ## Artists
 
-Click **Artists…**: the artist list opens next to the player. A narrow window grows to the right
-to make room; a wide window (840 points or more) keeps its size, and the player gets narrower.
-Click **Hide artists** to close it. The list starts empty: the first time you press play, the
-list opens.
+Click the sidebar icon at the top right of the player window: the side panel opens next to the
+player, with the artist list in its People tab (see [Panel tabs](#panel-tabs)). A narrow window
+grows to the right to make room; a wide window (840 points or more) keeps its size, and the
+player gets narrower. Click the icon again to close it. In the menu bar
+player, **Panel** opens the window with its panel. The list starts empty: the first time you press
+play, the panel opens.
 
 To add an artist or a label, click **+** at the top right of the list, paste the address of
 their Bandcamp site, for example `artist.bandcamp.com` or any page of their site, then click
@@ -93,10 +96,14 @@ Some artists show in grey, with the reason in orange:
   browser.
 - **No releases on Bandcamp**: their page lists nothing.
 
-The app finds these when it tries to play them, and skips them when picking at random for a
-week. Then it tries them again, in case the artist changed something. To find them all at once,
-choose **Check which artists can play** in the **…** menu; it reads each artist's site one at a
-time, so it takes a few minutes.
+The app finds these when it tries to play them: at random, it then picks another artist, and
+skips them for a week before trying them again, in case the artist changed something. The play
+button next to an artist finds out right away. Artists are looked at only when they come up, so
+the app never sends Bandcamp a burst of requests.
+
+When Bandcamp is busy or refuses requests, its error pages are not taken for an artist without
+releases: nothing is marked. A request that gets no answer gives up after 15 seconds, and the
+player says "Bandcamp isn't answering right now" instead of loading on and on.
 
 ### How an album is picked
 
@@ -116,13 +123,20 @@ tracks. Uncheck it to go back to albums.
 
 Click the thumbs up, right of next, to keep the track playing in the **Liked** tab; it turns
 blue. Click it again to remove it. The Liked tab lists these tracks with their cover: click a
-cover or play to hear one again. A thumbs up removes a thumbs down, and the other way around.
+cover or play to hear one again, or the undo arrow to remove it. A thumbs up removes a thumbs down, and the other way around.
+
+### Favorites
+
+Check **Favorites** at the bottom of the player window (or in the "…" menu of the menu bar
+player) to play only your thumbs up: each track is picked at random among them, and radio doesn't
+apply. With **Avoid repeats** on, the tracks heard lately come last. Playing an artist from the
+list, or a new release from Community, turns Favorites off.
 
 ## Thumbs down
 
 Click the thumbs down to skip the current track and never play it again, in radio mode and in
-albums. The app remembers these tracks by their Bandcamp ID. To hear one again, click
-**Artists…**, open the **Thumbs down** tab and click the undo arrow next to it. Not sure it's the right track?
+albums. The app remembers these tracks by their Bandcamp ID. To hear one again, open the side panel,
+open the **Thumbs down** tab and click the undo arrow next to it. Not sure it's the right track?
 Click its play button to listen to it first.
 
 ## Panel tabs
@@ -175,6 +189,9 @@ have one:
 - the latest posts: new releases, listening parties and messages from the artist, with their date,
   likes and comments.
 
+Click a supporter to shuffle in their collection (see [Someone else's collection](#someone-elses-collection));
+right-click one to open their Bandcamp page.
+
 Click the cover of a new release to play it in Dérive, from its first track; radio mode turns off
 so the whole release plays.
 
@@ -220,9 +237,24 @@ catalog can come back often. Turn on **Avoid repeats**, at the top of the Histor
 
 When nothing else can play, a track plays again rather than nothing. Off by default.
 
+## Someone else's collection
+
+Click a fan, among the recent supporters of the Community tab or the fan comments of the (i) tab,
+to shuffle in their public Bandcamp collection instead of your artists. A blue banner at the top
+of the player shows their picture and name, and how much of the collection is loaded; the rest
+loads in the background, unhurried. Click the name to open their Bandcamp page.
+
+Radio works there as with your artists: on, a random track of their collection after each track;
+off, whole albums of their collection, one after the other. **Favorites** leaves their collection
+to play your thumbs up.
+
+Click **Back to mine** in the banner to return to your artists, with a new random pick right
+away. Playing an artist from your list, a new release from Community, or turning on Favorites
+also brings you back. The collection isn't kept: at launch, Dérive is back with your artists.
+
 ## Merch
 
-The **Merch** tab of the artist list shows what the artist playing sells on Bandcamp: CDs,
+The **Merch** tab of the side panel shows what the artist playing sells on Bandcamp: CDs,
 records, tapes, clothes, prints. A slideshow at the top goes through every item still available,
 one at a time, every 6 seconds; every item, sold out or not, is listed below it. Items of the album playing come first, with an
 orange note; sold-out items are dimmed. Click an item to open it on Bandcamp.
@@ -243,6 +275,9 @@ left on the right. Click or drag the bar to move in the track. Control Center's 
 track too.
 
 The window keeps its place and size, and comes back at launch if it was open when you quit.
+
+A short message at the bottom of the player says what an action just did: favorites or radio on
+or off, on top or not, thumbs up or down. It fades out after a few seconds.
 
 ## Media keys and Control Center
 
@@ -271,11 +306,13 @@ The app handles `derive://` URLs while it is running:
 | `derive://next` | Next track |
 | `derive://shuffle` | New random album |
 | `derive://window` | Open the player window |
-| `derive://artists` | Show or hide the artist list |
+| `derive://panel` | Show or hide the side panel (`derive://artists` works too) |
 | `derive://radio` | Turn radio mode on |
 | `derive://album` | Turn radio mode off: play whole albums |
 | `derive://dislike` | Thumbs down on the current track |
 | `derive://like` | Thumbs up on the current track, or remove it |
+| `derive://favorites` | Turn Favorites on or off |
+| `derive://collection?user=name` | Shuffle in a fan's collection; `derive://collection` alone goes back to yours |
 | `derive://signin` | Open the Bandcamp sign-in window |
 | `derive://artist?url=name.bandcamp.com` | Play a random album by that artist (radio off) |
 

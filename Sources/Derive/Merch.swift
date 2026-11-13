@@ -24,7 +24,7 @@ extension Bandcamp {
     /// Reads /merch of a site. Its first items are only in the HTML grid; the rest only in
     /// data-client-items, like /music.
     static func merch(at root: URL) async throws -> [MerchItem] {
-        let (data, response) = try await URLSession.shared.data(from: root.appendingPathComponent("merch"))
+        let (data, response) = try await Bandcamp.session.data(from: root.appendingPathComponent("merch"))
         let page = String(decoding: data, as: UTF8.self)
         let base = response.url ?? root
         var items = gridMerch(in: page, base: base) + clientMerch(in: page, base: base)

@@ -194,13 +194,16 @@ struct ArtistsView: View {
             tabCycle = nil
             tab = value
         } label: {
-            HStack(spacing: 5) {
+            HStack(spacing: 4) {
                 Image(systemName: symbol)
                 if let count { Text("\(count)").monospacedDigit() }
             }
             .font(.callout.weight(selected ? .semibold : .regular))
+            // One line, whatever the room: with seven tabs, a count must never wrap.
+            .lineLimit(1)
+            .fixedSize()
             .foregroundStyle(selected ? .white : .secondary)
-            .padding(.horizontal, 12)
+            .padding(.horizontal, 8)
             .padding(.vertical, 4)
             .background(selected ? Color.accentColor : .clear, in: RoundedRectangle(cornerRadius: 5))
             .contentShape(Rectangle())
@@ -279,10 +282,7 @@ struct ArtistsView: View {
 
     /// Top right of the Artists tab: progress, add, and the other actions.
     @ViewBuilder private var artistsToolbar: some View {
-        if let progress = player.checkProgress {
-            Text("Checking \(progress.done)/\(progress.total)…").font(.caption).foregroundStyle(.secondary)
-        }
-        if store.isSyncing || player.checkProgress != nil {
+        if store.isSyncing {
             ProgressView().controlSize(.mini)
         }
         Button { showAdd = true } label: {
@@ -299,11 +299,6 @@ struct ArtistsView: View {
                 Button("Turn all followed off") { store.setFollowedEnabled(false) }
                 Divider()
             }
-            Button("Check which artists can play") {
-                Task { await player.checkPlayability(of: store.artists) }
-            }
-            .disabled(player.checkProgress != nil || store.artists.isEmpty)
-            Divider()
             BandcampSessionButton()
             if store.profile != nil {
                 Button("Unlink…") { confirmUnlink = true }

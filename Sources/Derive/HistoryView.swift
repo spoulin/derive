@@ -155,7 +155,7 @@ struct LikedView: View {
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         } else {
-            Text("Tracks you gave a thumbs up. Click a cover or play to hear one again.")
+            Text("Tracks you gave a thumbs up. Click a cover or play to hear one again, or the undo arrow to remove it.")
                 .font(.caption).foregroundStyle(.secondary)
             List(likes.tracks) { track in
                 HStack {
@@ -177,9 +177,10 @@ struct LikedView: View {
                     }
                     .buttonStyle(.borderless)
                     .help("Open the album on Bandcamp")
-                    Button { likes.remove(track.id) } label: { Image(systemName: "hand.thumbsup.fill") }
+                    // The undo arrow, like in the Thumbs down tab: a thumbs up here read as "like".
+                    Button { likes.remove(track.id) } label: { Image(systemName: "arrow.uturn.backward.circle") }
                         .buttonStyle(.borderless)
-                        .help("Remove the thumbs up")
+                        .help("Remove the thumbs up: the track leaves this list")
                 }
             }
             .scrollContentBackground(.hidden)

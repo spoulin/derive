@@ -72,15 +72,9 @@ struct CommunityView: View {
             // Top-aligned: a fan without a place has one line less, and must not sit lower.
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 88), spacing: 8, alignment: .top)], spacing: 14) {
                 ForEach(fans) { fan in
-                    Button { if let url = fan.profileURL { NSWorkspace.shared.open(url) } } label: {
+                    Button { shuffleCollection(fan.profileURL, avatar: fan.avatarURL) } label: {
                         VStack(spacing: 6) {
-                            AsyncImage(url: fan.avatarURL) { image in
-                                image.resizable().scaledToFill()
-                            } placeholder: {
-                                Circle().fill(.quaternary)
-                            }
-                            .frame(width: 64, height: 64)
-                            .clipShape(Circle())
+                            SupporterAvatar(url: fan.avatarURL)
                             Text(fan.name).font(.caption).lineLimit(1)
                             if let location = fan.location {
                                 Text(location).font(.caption2).foregroundStyle(.secondary).lineLimit(1)
@@ -89,7 +83,8 @@ struct CommunityView: View {
                         .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.plain)
-                    .help("Open \(fan.name)'s Bandcamp profile")
+                    .help("Shuffle in \(fan.name)'s collection. Right-click to open their Bandcamp page.")
+                    .contextMenu { fanMenu(fan.profileURL, avatar: fan.avatarURL) }
                 }
             }
         }
@@ -240,5 +235,47 @@ struct CommunityView: View {
         Text(text)
             .foregroundStyle(.secondary)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+}
+
+/// Clicking a fan shuffles in their collection; their Bandcamp page is in the right-click menu.
+@MainActor
+func shuffleCollection(_ profileURL: URL?, avatar: URL? = nil) {
+    guard let user = profileURL.flatMap({ Following.username(from: $0.absoluteString) }) else { return }
+    Player.shared.shuffleCollection(of: user, avatar: avatar)
+}
+
+@MainActor @ViewBuilder
+func fanMenu(_ profileURL: URL?, avatar: URL? = nil) -> some View {
+    Button("Shuffle Their Collection") { shuffleCollection(profileURL, avatar: avatar) }
+    Button("Open on Bandcamp") { if let url = profileURL { NSWorkspace.shared.open(url) } }
+}
+
+/// A recent supporter's picture. On hover, a play glyph says that a click plays their collection.
+private struct SupporterAvatar: View {
+    let url: URL?
+    @State private var hovering = false
+
+    var body: some View {
+        AsyncImage(url: url) { image in
+            image.resizable().scaledToFill()
+        } placeholder: {
+            Circle().fill(.quaternary)
+        }
+        .frame(width: 64, height: 64)
+        .overlay {
+            if hovering {
+                ZStack {
+                    Color.black.opacity(0.35)
+                    Image(systemName: "play.fill")
+                        .font(.system(size: 22))
+                        .foregroundStyle(.white)
+                        .shadow(radius: 3)
+                }
+                .transition(.opacity)
+            }
+        }
+        .clipShape(Circle())
+        .onHover { inside in withAnimation(.easeOut(duration: 0.15)) { hovering = inside } }
     }
 }

@@ -28,6 +28,15 @@ enum BandcampError: Error {
 }
 
 enum Bandcamp {
+    /// Every request to Bandcamp: a slow answer gives up after 15 seconds instead of 60, so the
+    /// player never stays on "Loading…" for minutes when Bandcamp has trouble.
+    static let session: URLSession = {
+        let configuration = URLSessionConfiguration.default
+        configuration.timeoutIntervalForRequest = 15
+        configuration.timeoutIntervalForResource = 30
+        return URLSession(configuration: configuration)
+    }()
+
     /// Reads the /music page of a site. Albums come first; tracks only when there are no albums.
     static func site(at root: URL) async throws -> Site {
         let (page, finalURL) = try await fetch(root.appendingPathComponent("music"))
@@ -44,7 +53,12 @@ enum Bandcamp {
         if releases.isEmpty, attribute("data-tralbum", in: page) != nil {
             releases = [finalURL]
         }
-        guard !releases.isEmpty else { throw BandcampError.noAlbums }
+        // No releases means something only on a real artist page; a page Bandcamp sends instead
+        // (a check, a busy page) is not one, and must not get the artist marked.
+        guard !releases.isEmpty else {
+            throw metaContent("og:site_name", in: page) != nil && page.contains("data-band")
+                ? BandcampError.noAlbums : BandcampError.parse
+        }
         return Site(name: name, releases: releases)
     }
 
@@ -91,7 +105,11 @@ enum Bandcamp {
     }
 
     private static func fetch(_ url: URL) async throws -> (String, URL) {
-        let (data, response) = try await URLSession.shared.data(from: url)
+        let (data, response) = try await Bandcamp.session.data(from: url)
+        // An error page (too many requests, server trouble) says nothing about the artist.
+        if let status = (response as? HTTPURLResponse)?.statusCode, !(200..<300).contains(status) {
+            throw URLError(.badServerResponse)
+        }
         return (String(decoding: data, as: UTF8.self), response.url ?? url)
     }
 

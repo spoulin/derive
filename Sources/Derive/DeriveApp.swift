@@ -29,14 +29,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 case "next": player.nextTrack()
                 case "shuffle": player.nextAlbum()
                 case "window": PlayerWindow.show()
-                case "artists":
+                case "artists", "panel":
                     PlayerWindow.show()
                     PlayerWindow.toggleArtists()
                 case "radio": player.radio = true
                 case "album": player.radio = false
                 case "dislike": player.dislikeCurrent()
                 case "like": player.likeCurrent()
+                case "favorites": player.favoritesOnly.toggle()
                 case "signin": BandcampSession.shared.signIn()
+                case "collection":
+                    // derive://collection?user=name shuffles in that fan's collection;
+                    // derive://collection alone goes back to your own artists.
+                    let value = URLComponents(url: url, resolvingAgainstBaseURL: false)?
+                        .queryItems?.first { $0.name == "user" }?.value
+                    if let user = value.flatMap(Following.username(from:)) {
+                        player.shuffleCollection(of: user)
+                    } else {
+                        player.leaveCollection()
+                    }
                 case "artist":
                     // derive://artist?url=name.bandcamp.com plays that artist, listed or not.
                     let value = URLComponents(url: url, resolvingAgainstBaseURL: false)?

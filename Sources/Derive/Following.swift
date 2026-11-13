@@ -39,7 +39,7 @@ enum Following {
     }
 
     static func bands(of username: String) async throws -> [FollowedBand] {
-        let (data, _) = try await URLSession.shared.data(from: profileURL(for: username))
+        let (data, _) = try await Bandcamp.session.data(from: profileURL(for: username))
         let page = String(decoding: data, as: UTF8.self)
         guard let blob = Bandcamp.attribute("data-blob", in: page),
               let root = try JSONSerialization.jsonObject(with: Data(blob.utf8)) as? [String: Any],
@@ -70,7 +70,7 @@ enum Following {
         request.httpBody = try JSONSerialization.data(withJSONObject: [
             "fan_id": fanID, "older_than_token": token, "count": 200,
         ])
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (data, _) = try await Bandcamp.session.data(for: request)
         guard let root = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             throw FollowingError.notFound
         }

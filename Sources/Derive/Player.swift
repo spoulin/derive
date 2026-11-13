@@ -22,9 +22,32 @@ final class Player: ObservableObject {
             UserDefaults.standard.set(radio, forKey: Self.radioKey)
             upcoming = nil
             if radio, album != nil { prefetch() }
+            guard radio != oldValue else { return }
+            Toast.shared.show(radio ? "Radio on: a new random album and track after each track"
+                                    : "Radio off: the album plays to the end",
+                              symbol: radio ? "dot.radiowaves.left.and.right" : "square.stack")
         }
     }
     nonisolated static let radioKey = "radioMode"
+
+    /// Favorites: each track is picked at random among the tracks given a thumbs up.
+    @Published var favoritesOnly = UserDefaults.standard.bool(forKey: "favoritesOnly") {
+        didSet {
+            UserDefaults.standard.set(favoritesOnly, forKey: "favoritesOnly")
+            upcoming = nil
+            guard favoritesOnly != oldValue else { return }
+            if favoritesOnly { guest.leave() }
+            if favoritesOnly, likes.tracks.isEmpty {
+                favoritesOnly = false
+                Toast.shared.show("No thumbs up yet: give tracks a thumbs up to play your favorites",
+                                  symbol: "hand.thumbsup")
+                return
+            }
+            Toast.shared.show(favoritesOnly ? "Favorites on: random tracks from your thumbs up only"
+                                            : "Favorites off: random tracks from all your artists",
+                              symbol: favoritesOnly ? "heart.fill" : "heart")
+        }
+    }
 
     static let shared = Player()
 
@@ -139,7 +162,9 @@ final class Player: ObservableObject {
     /// Plays a random album of this artist, from its first track, and turns radio mode off.
     /// Works even when the artist is turned off.
     func playArtist(_ artist: Artist) {
+        guest.leave()
         radio = false
+        favoritesOnly = false
         player.pause()
         Task { await startRandomAlbum(only: artist) }
     }
@@ -147,7 +172,9 @@ final class Player: ObservableObject {
     /// Plays one release from its first track (skipping thumbs down), and turns radio mode off so
     /// the whole release plays. Used by the Community tab's new releases.
     func playAlbum(at url: URL, by artist: Artist) {
+        guest.leave()
         radio = false
+        favoritesOnly = false
         player.pause()
         Task {
             guard !isLoading else { return }
@@ -204,6 +231,8 @@ final class Player: ObservableObject {
         dislikes.add(DislikedTrack(id: track.id, title: track.title, album: album.title,
                                    artist: artist ?? "", albumURL: album.pageURL, artURL: album.artURL))
         likes.remove(track.id)
+        Toast.shared.show("Thumbs down: “\(track.title)” won't play again. Undo it in the Thumbs down tab.",
+                          symbol: "hand.thumbsdown")
         advance()
     }
 
@@ -220,9 +249,11 @@ final class Player: ObservableObject {
         guard track.id != 0 else { return }
         if likes.contains(track.id) {
             likes.remove(track.id)
+            Toast.shared.show("Thumbs up removed from “\(track.title)”", symbol: "hand.thumbsup")
         } else {
             likes.add(LikedTrack(id: track.id, title: track.title, album: album.title, artist: artist ?? "",
                                  albumURL: album.pageURL, artURL: album.artURL, likedAt: Date()))
+            Toast.shared.show("Thumbs up: “\(track.title)” is in your Liked tab", symbol: "hand.thumbsup.fill")
         }
     }
 
@@ -243,6 +274,16 @@ final class Player: ObservableObject {
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
+        if chosen == nil, guest.isActive {
+            if let pick = await randomGuestPick(excluding: excluded) { return start(pick) }
+            errorMessage = "Couldn't play from \(guest.name)'s collection"
+            return
+        }
+        if chosen == nil, favoritesOnly {
+            if let pick = await randomFavorite() { return start(pick) }
+            errorMessage = likes.tracks.isEmpty ? "No thumbs up yet" : "Bandcamp isn't answering right now. Try again in a little while."
+            return
+        }
         if let chosen {
             if let pick = await randomPick(from: [chosen], excluding: excluded, skipMarked: false) {
                 return start(pick)
@@ -272,7 +313,7 @@ final class Player: ObservableObject {
         var next = ready
         if next == nil { next = await randomPick(from: artists) }
         guard let pick = next else {
-            errorMessage = "Couldn't reach Bandcamp"
+            errorMessage = "Bandcamp isn't answering right now. Try again in a little while."
             return
         }
         start(pick)
@@ -285,7 +326,67 @@ final class Player: ObservableObject {
         currentArtist = pick.artist
         index = pick.index
         playCurrent()
-        if radio { prefetch() }
+        if radio, !favoritesOnly, !guest.isActive { prefetch() }
+    }
+
+    private var guest: GuestCollection { .shared }
+
+    /// Shuffles in a fan's public collection instead of your artists, until you leave it.
+    func shuffleCollection(of username: String, avatar: URL? = nil) {
+        favoritesOnly = false
+        Task {
+            guard await guest.enter(username, avatar: avatar) else { return }
+            player.pause()
+            await startRandomAlbum()
+        }
+    }
+
+    /// Back to your own artists, with a new random pick right away.
+    func leaveCollection() {
+        guard guest.isActive else { return }
+        guest.leave()
+        nextAlbum()
+    }
+
+    /// A random release of the fan's collection: a random track of it in radio mode, its first
+    /// track otherwise. Avoiding repeats, one not heard lately when there is one.
+    private func randomGuestPick(excluding excluded: URL? = nil) async -> Pick? {
+        let recentAlbums = history.recentAlbums
+        let recentTracks = history.recentTrackIDs
+        let items = guest.items.filter { $0.url != excluded }
+        let fresh = items.filter { !recentAlbums.contains($0.url) }
+        // A few tries: a release may have no audio, or be gone.
+        for item in (fresh.isEmpty ? items : fresh).shuffled().prefix(4) {
+            guard let album = try? await Bandcamp.album(at: item.url) else { continue }
+            let allowed = album.tracks.indices.filter { !dislikes.contains(album.tracks[$0].id) }
+            guard !allowed.isEmpty, let site = ArtistStore.siteURL(from: item.url.absoluteString) else { continue }
+            let unheard = allowed.filter { !recentTracks.contains(album.tracks[$0].id) }
+            let artist = ArtistStore.shared.artists.first { $0.url.host == site.host }
+                ?? Artist(url: site, name: item.artist.isEmpty ? (site.host ?? "") : item.artist)
+            let index = radio ? (unheard.isEmpty ? allowed : unheard).randomElement()! : allowed[0]
+            return Pick(album: album, artist: artist, index: index)
+        }
+        return nil
+    }
+
+    /// A random track among the thumbs up, other than the one playing; avoiding repeats, one not
+    /// heard lately when there is one.
+    private func randomFavorite() async -> Pick? {
+        let current = currentTrackID
+        var candidates = likes.tracks.filter { $0.id != current && !dislikes.contains($0.id) }
+        if candidates.isEmpty { candidates = likes.tracks }
+        let recent = history.recentTrackIDs
+        let fresh = candidates.filter { !recent.contains($0.id) }
+        // A few tries: a track may have been taken off Bandcamp.
+        for liked in (fresh.isEmpty ? candidates : fresh).shuffled().prefix(4) {
+            guard let album = try? await Bandcamp.album(at: liked.albumURL),
+                  let index = album.tracks.firstIndex(where: { $0.id == liked.id }),
+                  let site = ArtistStore.siteURL(from: liked.albumURL.absoluteString) else { continue }
+            let artist = ArtistStore.shared.artists.first { $0.url.host == site.host }
+                ?? Artist(url: site, name: liked.artist)
+            return Pick(album: album, artist: artist, index: index)
+        }
+        return nil
     }
 
     private func randomPick(from artists: [Artist], excluding excluded: URL? = nil,
@@ -318,7 +419,7 @@ final class Player: ObservableObject {
             guard let pick = await randomPick(from: artists), !Task.isCancelled, radio else { return }
             upcoming = pick
             if let url = pick.album.artURL,
-               let (data, _) = try? await URLSession.shared.data(from: url),
+               let (data, _) = try? await Bandcamp.session.data(from: url),
                let image = NSImage(data: data), !Task.isCancelled {
                 preloadedCover = (url, image)
             }
@@ -340,7 +441,9 @@ final class Player: ObservableObject {
         }
         let recentTracks = avoidRecent ? history.recentTrackIDs : []
         let recentAlbums = avoidRecent ? history.recentAlbums : []
+        bandcampDown = false
         for artist in order.prefix(3) {
+            if bandcampDown { return nil }
             guard let site = await site(for: artist) else { continue }
             let releases = site.releases.filter { $0 != excluded }
             var empty = 0
@@ -368,6 +471,9 @@ final class Player: ObservableObject {
 
     private var playability: PlayabilityStore { .shared }
 
+    /// Set when a site couldn't be read for reasons that aren't the artist's; a pick then stops.
+    private var bandcampDown = false
+
     private func site(for artist: Artist) async -> Site? {
         if let site = sites[artist.url] { return site }
         do {
@@ -381,33 +487,10 @@ final class Player: ObservableObject {
             playability.mark(artist.url, .noReleases)
             return nil
         } catch {
-            return nil // Network trouble: nothing is learned about the artist.
-        }
-    }
-
-    /// Progress of "Check which artists can play", nil when not running.
-    @Published private(set) var checkProgress: (done: Int, total: Int)?
-
-    /// Looks at every artist once, one at a time to go easy on Bandcamp, and marks or clears
-    /// them. Reads the site, then up to three releases until one has audio.
-    func checkPlayability(of artists: [Artist]) async {
-        guard checkProgress == nil else { return }
-        checkProgress = (0, artists.count)
-        defer { checkProgress = nil }
-        for (done, artist) in artists.enumerated() {
-            checkProgress = (done, artists.count)
-            guard let site = await site(for: artist) else { continue }
-            var empty = 0
-            var playable = false
-            for release in site.releases.shuffled().prefix(3) {
-                guard let album = try? await Bandcamp.album(at: release) else { continue }
-                if album.tracks.isEmpty { empty += 1 } else { playable = true; break }
-            }
-            if playable {
-                playability.clear(artist.url)
-            } else if empty == site.releases.count {
-                playability.mark(artist.url, .noAudio)
-            }
+            // Network trouble, or Bandcamp having trouble: nothing is learned about the artist,
+            // and the pick stops instead of trying more.
+            bandcampDown = true
+            return nil
         }
     }
 
@@ -443,7 +526,9 @@ final class Player: ObservableObject {
 
     private func advance() {
         guard let album else { return }
-        if radio {
+        // A new random pick after each track: radio (in your artists or someone's collection),
+        // and favorites. Otherwise the album goes on.
+        if radio || favoritesOnly {
             player.pause()
             Task { await startRandomAlbum() }
             return
@@ -452,6 +537,9 @@ final class Player: ObservableObject {
         while index < album.tracks.count, dislikes.contains(album.tracks[index].id) { index += 1 }
         if index < album.tracks.count {
             playCurrent()
+        } else if guest.isActive {
+            // Album finished, in someone's collection: another album of theirs.
+            Task { await startRandomAlbum(excluding: album.pageURL) }
         } else if let currentArtist {
             // Album finished: another random album by the same artist.
             Task { await startRandomAlbum(only: currentArtist, excluding: album.pageURL) }
@@ -476,7 +564,7 @@ final class Player: ObservableObject {
             return showCover(preloaded.image)
         }
         Task {
-            guard let (data, _) = try? await URLSession.shared.data(from: url),
+            guard let (data, _) = try? await Bandcamp.session.data(from: url),
                   let image = NSImage(data: data),
                   artURL == url // Another album started while this cover was downloading.
             else { return }

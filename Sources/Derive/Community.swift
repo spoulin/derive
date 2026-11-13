@@ -45,7 +45,7 @@ extension Bandcamp {
             request.httpShouldHandleCookies = false
             request.setValue(cookies, forHTTPHeaderField: "Cookie")
         }
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await Bandcamp.session.data(for: request)
         let html = String(decoding: data, as: UTF8.self)
         guard (response as? HTTPURLResponse)?.statusCode == 200,
               let start = html.range(of: #"id="pagedata""#),

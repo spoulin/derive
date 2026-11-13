@@ -121,7 +121,7 @@ final class BandcampSession: NSObject, ObservableObject {
         var request = URLRequest(url: page)
         request.httpShouldHandleCookies = false
         request.setValue(cookies, forHTTPHeaderField: "Cookie")
-        guard let (data, _) = try? await URLSession.shared.data(for: request) else { return nil }
+        guard let (data, _) = try? await Bandcamp.session.data(for: request) else { return nil }
         let html = String(decoding: data, as: UTF8.self)
         guard let start = html.range(of: #"id="pagedata""#),
               let json = Bandcamp.attribute("data-blob", in: String(html[start.lowerBound...])),

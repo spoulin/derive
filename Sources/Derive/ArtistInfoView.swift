@@ -147,19 +147,25 @@ struct ArtistInfoView: View {
             sectionTitle("What fans wrote")
             ForEach(comments) { comment in
                 HStack(alignment: .top, spacing: 10) {
-                    AsyncImage(url: comment.avatarURL) { image in
-                        image.resizable().scaledToFill()
-                    } placeholder: {
-                        Circle().fill(.quaternary)
+                    Button { shuffleCollection(comment.profileURL, avatar: comment.avatarURL) } label: {
+                        AsyncImage(url: comment.avatarURL) { image in
+                            image.resizable().scaledToFill()
+                        } placeholder: {
+                            Circle().fill(.quaternary)
+                        }
+                        .frame(width: 28, height: 28)
+                        .clipShape(Circle())
                     }
-                    .frame(width: 28, height: 28)
-                    .clipShape(Circle())
+                    .buttonStyle(.plain)
+                    .help("Shuffle in \(comment.name)'s collection")
+                    .contextMenu { fanMenu(comment.profileURL, avatar: comment.avatarURL) }
                     VStack(alignment: .leading, spacing: 3) {
-                        Button { if let url = comment.profileURL { NSWorkspace.shared.open(url) } } label: {
+                        Button { shuffleCollection(comment.profileURL, avatar: comment.avatarURL) } label: {
                             Text(comment.name).font(.callout.weight(.semibold))
                         }
                         .buttonStyle(.plain)
-                        .help("Open their Bandcamp profile")
+                        .help("Shuffle in \(comment.name)'s collection. Right-click to open their Bandcamp page.")
+                        .contextMenu { fanMenu(comment.profileURL, avatar: comment.avatarURL) }
                         Text(comment.text).font(.callout).textSelection(.enabled)
                         if let track = comment.favoriteTrack {
                             Text("Favorite track: \(track)").font(.caption).foregroundStyle(.secondary)
@@ -202,7 +208,7 @@ private struct ArtistPhoto: View {
             .clipped()
             .task(id: url) {
                 image = nil
-                guard let (data, _) = try? await URLSession.shared.data(from: url) else { return }
+                guard let (data, _) = try? await Bandcamp.session.data(from: url) else { return }
                 image = NSImage(data: data)
             }
     }
