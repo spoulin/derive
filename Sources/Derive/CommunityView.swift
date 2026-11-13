@@ -69,16 +69,16 @@ struct CommunityView: View {
     private func supporters(_ fans: [Community.Supporter]) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             sectionTitle("Recent supporters")
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 84), spacing: 8)], spacing: 10) {
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 88), spacing: 8)], spacing: 14) {
                 ForEach(fans) { fan in
                     Button { if let url = fan.profileURL { NSWorkspace.shared.open(url) } } label: {
-                        VStack(spacing: 4) {
+                        VStack(spacing: 6) {
                             AsyncImage(url: fan.avatarURL) { image in
                                 image.resizable().scaledToFill()
                             } placeholder: {
                                 Circle().fill(.quaternary)
                             }
-                            .frame(width: 40, height: 40)
+                            .frame(width: 64, height: 64)
                             .clipShape(Circle())
                             Text(fan.name).font(.caption).lineLimit(1)
                             if let location = fan.location {

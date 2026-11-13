@@ -61,7 +61,8 @@ extension Bandcamp {
                 id: (fan["fan_id"] as? NSNumber)?.intValue ?? 0,
                 name: fan["name"] as? String ?? "",
                 location: (fan["location"] as? String).flatMap { $0.isEmpty ? nil : $0 },
-                avatarURL: (fan["image_id"] as? NSNumber).flatMap { imageURL(id: $0.intValue, size: 42) },
+                // Size 21 is 120 pixels wide, sharp at the size shown; 42 is only 50.
+                avatarURL: (fan["image_id"] as? NSNumber).flatMap { imageURL(id: $0.intValue, size: 21) },
                 profileURL: (fan["username"] as? String).flatMap { URL(string: "https://bandcamp.com/\($0)") })
         }
         return Community(pageURL: response.url ?? page, stories: stories, supporters: supporters)
