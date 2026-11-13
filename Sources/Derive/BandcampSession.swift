@@ -15,6 +15,10 @@ final class BandcampSession: NSObject, ObservableObject {
     @Published private(set) var username: String? = UserDefaults.standard.string(forKey: "bandcampUsername") {
         didSet { UserDefaults.standard.set(username, forKey: "bandcampUsername") }
     }
+    /// The fan ID of the account signed in, which Bandcamp needs to follow an artist.
+    private(set) var fanID: Int? = UserDefaults.standard.object(forKey: "bandcampFanID") as? Int {
+        didSet { UserDefaults.standard.set(fanID, forKey: "bandcampFanID") }
+    }
 
     private var store: WKHTTPCookieStore { WKWebsiteDataStore.default().httpCookieStore }
     private var window: NSWindow?
@@ -27,7 +31,7 @@ final class BandcampSession: NSObject, ObservableObject {
         Task {
             await refresh()
             // Signed in before the username was kept: read it, without linking anything.
-            if isSignedIn, username == nil { username = await readUsername() }
+            if isSignedIn, username == nil || fanID == nil { username = await readUsername() }
         }
     }
 
@@ -93,6 +97,7 @@ final class BandcampSession: NSObject, ObservableObject {
         }
         await refresh()
         username = nil
+        fanID = nil
         CommunityStore.shared.reset()
     }
 
@@ -128,6 +133,7 @@ final class BandcampSession: NSObject, ObservableObject {
               let blob = try? JSONSerialization.jsonObject(with: Data(json.utf8)) as? [String: Any],
               let fan = (blob["identities"] as? [String: Any])?["fan"] as? [String: Any]
         else { return nil }
+        if let id = (fan["id"] as? NSNumber)?.intValue { fanID = id }
         if let name = fan["username"] as? String, !name.isEmpty { return name }
         // Otherwise the profile address, in whichever field holds it.
         for value in fan.values {
@@ -135,6 +141,43 @@ final class BandcampSession: NSObject, ObservableObject {
                let name = Following.username(from: text) {
                 return name
             }
+        }
+        return nil
+    }
+}
+
+extension BandcampSession {
+    /// Follows or unfollows an artist or label on Bandcamp, as its Follow button does, with the
+    /// session. Returns whether you follow it afterwards, or nil when it didn't work.
+    func setFollowing(_ follow: Bool, bandID: Int) async -> Bool? {
+        if fanID == nil { _ = await readUsername() }
+        guard isSignedIn, let fanID else { return nil }
+        let endpoint = URL(string: "https://bandcamp.com/fan_follow_band_cb")!
+        guard let cookies = await cookieHeader(for: endpoint) else { return nil }
+        // Bandcamp's "crumb" token: sent without one, the answer is invalid_crumb with a fresh
+        // one, and the request goes again with it, as the site does.
+        var crumb: String?
+        for _ in 0..<3 {
+            var request = URLRequest(url: endpoint)
+            request.httpMethod = "POST"
+            request.httpShouldHandleCookies = false
+            request.setValue(cookies, forHTTPHeaderField: "Cookie")
+            request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+            var form = URLComponents()
+            form.queryItems = [URLQueryItem(name: "fan_id", value: "\(fanID)"),
+                               URLQueryItem(name: "band_id", value: "\(bandID)"),
+                               URLQueryItem(name: "action", value: follow ? "follow" : "unfollow")]
+            if let crumb { form.queryItems?.append(URLQueryItem(name: "crumb", value: crumb)) }
+            request.httpBody = form.percentEncodedQuery?.data(using: .utf8)
+            guard let (data, _) = try? await Bandcamp.session.data(for: request),
+                  let answer = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+            else { return nil }
+            if answer["error"] as? String == "invalid_crumb", let fresh = answer["crumb"] as? String {
+                crumb = fresh
+                continue
+            }
+            guard answer["ok"] as? Bool == true else { return nil }
+            return answer["is_following"] as? Bool ?? follow
         }
         return nil
     }

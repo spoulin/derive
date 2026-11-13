@@ -17,11 +17,12 @@ choose, and plays its tracks in order. Add as many artists or labels as you like
 - Media keys and Control Center's Now Playing
 - Your own list of Bandcamp artists and labels, each one turned on or off
 - Link your Bandcamp profile to play the artists and labels you follow, kept in sync
-- Sign in to Bandcamp: your profile links by itself, and artists' messages show in Community
+- Sign in to Bandcamp: your profile links by itself, artists' messages show in Community, and
+  you can follow or unfollow artists from the app
 - Every artist that is turned on has the same chance, whatever the size of their catalog
 - Album cover and current track, with a bar to see the time left and move in the track
 - A player window that stays open, with a large cover, to keep on your desktop
-- Play/pause, next track, and shuffle (new random album)
+- Play/pause, next track, and the dice for another random album
 - Open the current album on Bandcamp
 - The artist playing: photo, bio, upcoming shows and what fans wrote about the album
 - The merch of the artist playing
@@ -113,7 +114,7 @@ chance, then picks one of that artist's albums at random.
 ## Radio mode
 
 By default, the app plays the random album from its first track to its last. When the album ends,
-another random album by the same artist starts. To change artist, click shuffle. Check **Radio**
+another random album by the same artist starts. To change artist, click the dice, left of play: another album at random. Check **Radio**
 at the bottom of the player window (or in the "…" menu of the menu bar player) to turn on radio
 mode: after each track, the app picks a new artist and album at random, then plays a random track
 from it. The next track is picked while the current one plays, so there is no wait between
@@ -180,19 +181,27 @@ The **(i)** tab shows who plays the album playing, read from its Bandcamp page:
 
 For a label, the photo, bio and shows are the label's.
 
+### Follow and unfollow
+
+Signed in to Bandcamp, the **Follow** button on the artist's photo (and at the top of the
+Community tab) follows the artist or label on Bandcamp, as the button of their page does. They
+join your followed artists in Dérive right away. **Following** shows the ones you follow: point at
+it and click to unfollow, which removes them from your followed artists. Signed out, the button
+opens the sign-in window.
+
 ## Community
 
 The **Community** tab shows the artist's Bandcamp community page (/community), for artists who
 have one:
 
 - the fans who bought something lately; click one to open their Bandcamp profile;
-- the latest posts: new releases, listening parties and messages from the artist, with their date,
-  likes and comments.
+- the latest posts, always in full: new releases, listening parties and messages from the
+  artist, with their date, likes and comments.
 
 Click a supporter to shuffle in their collection (see [Someone else's collection](#someone-elses-collection));
 right-click one to open their Bandcamp page.
 
-Click the cover of a new release to play it in Dérive, from its first track; radio mode turns off
+Click the cover of a new release (a play glyph shows on hover) to play it in Dérive, from its first track; radio mode turns off
 so the whole release plays.
 
 Bandcamp shows the text of the artist's messages only to followers signed in on Bandcamp.

@@ -29,6 +29,8 @@ struct ArtistInfo: Equatable {
     }
 
     let name: String
+    /// Bandcamp's ID of the site (artist or label), to follow it.
+    let bandID: Int?
     let location: String?
     let photoURL: URL?
     let bio: String
@@ -107,8 +109,10 @@ extension Bandcamp {
                         .flatMap { URL(string: unescape($0), relativeTo: base)?.absoluteURL })
             }
 
+        let band = attribute("data-band", in: html)
+            .flatMap { try? JSONSerialization.jsonObject(with: Data($0.utf8)) as? [String: Any] }
         return ArtistInfo(
-            name: name, location: location, photoURL: photo, bio: bio, links: links, shows: shows,
+            name: name, bandID: (band?["id"] as? NSNumber)?.intValue, location: location, photoURL: photo, bio: bio, links: links, shows: shows,
             releaseTitle: current?["title"] as? String ?? "", releaseDate: releaseDate,
             about: (current?["about"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines),
             credits: (current?["credits"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines),

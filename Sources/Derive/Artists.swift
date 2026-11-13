@@ -95,6 +95,25 @@ final class ArtistStore: ObservableObject {
 
     var enabled: [Artist] { artists.filter(\.enabled) }
 
+    /// Whether you follow this site, as far as the followed list knows.
+    func isFollowed(bandID: Int?, site: URL) -> Bool {
+        artists.contains { $0.isFollowed && ($0.bandID == bandID || $0.url.host == site.host) }
+    }
+
+    /// After a follow or an unfollow in the app: the followed list changes right away, without
+    /// waiting for the next refresh of the linked profile.
+    func setFollowed(_ following: Bool, site: URL, name: String, bandID: Int) {
+        if following {
+            if let index = artists.firstIndex(where: { $0.url.host == site.host }) {
+                artists[index].bandID = bandID
+            } else {
+                artists.append(Artist(url: site, name: name, bandID: bandID))
+            }
+        } else {
+            artists.removeAll { $0.isFollowed && ($0.bandID == bandID || $0.url.host == site.host) }
+        }
+    }
+
     /// Checks the site on Bandcamp, then adds it. Throws when it has no playable releases.
     func add(_ input: String) async throws {
         guard let url = Self.siteURL(from: input) else { throw AddError.invalidURL }

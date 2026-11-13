@@ -31,6 +31,8 @@ struct Community: Equatable {
     }
 
     let pageURL: URL
+    /// Bandcamp's ID of the site, to follow it.
+    let bandID: Int?
     let stories: [Story]
     let supporters: [Supporter]
 }
@@ -65,7 +67,8 @@ extension Bandcamp {
                 avatarURL: (fan["image_id"] as? NSNumber).flatMap { imageURL(id: $0.intValue, size: 21) },
                 profileURL: (fan["username"] as? String).flatMap { URL(string: "https://bandcamp.com/\($0)") })
         }
-        return Community(pageURL: response.url ?? page, stories: stories, supporters: supporters)
+        let bandID = ((community["band"] as? [String: Any])?["id"] as? NSNumber)?.intValue
+        return Community(pageURL: response.url ?? page, bandID: bandID, stories: stories, supporters: supporters)
     }
 
     private static func story(_ item: [String: Any]) -> Community.Story? {

@@ -50,6 +50,8 @@ struct MerchView: View {
                 Text("\(artist.name) on Bandcamp · \(available.count) available · \(items.count) items")
                     .font(.caption).foregroundStyle(.secondary)
                 MerchSlideshow(items: slides, albumPath: player.pageURL?.path)
+                // A thin line between the slideshow and the list of every item.
+                Divider().opacity(0.6)
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 116), spacing: 12)], spacing: 14) {
                     ForEach(items) { item in
                         MerchCard(item: item, fromAlbum: item.path == player.pageURL?.path)
@@ -84,16 +86,6 @@ private struct MerchSlideshow: View {
                     .transition(.opacity)
             }
             .animation(.easeInOut(duration: 1), value: item.id)
-
-            if items.count > 1 {
-                HStack(spacing: 16) {
-                    Button { step(-1) } label: { Image(systemName: "chevron.left") }
-                    Text("\(index % items.count + 1) / \(items.count)")
-                        .font(.caption).foregroundStyle(.secondary).monospacedDigit()
-                    Button { step(1) } label: { Image(systemName: "chevron.right") }
-                }
-                .buttonStyle(.borderless)
-            }
         }
         .frame(maxWidth: .infinity)
         .onReceive(timer) { _ in if items.count > 1 { index += 1 } }
@@ -117,10 +109,6 @@ private struct MerchSlideshow: View {
         .frame(maxWidth: .infinity)
     }
 
-    private func step(_ delta: Int) {
-        index = (index + delta + items.count) % items.count
-    }
-
     private func slide(_ item: MerchItem) -> some View {
         Button { NSWorkspace.shared.open(item.url) } label: {
             VStack(spacing: 6) {
@@ -135,6 +123,7 @@ private struct MerchSlideshow: View {
                         }
                     }
                     .clipShape(RoundedRectangle(cornerRadius: 6))
+                    .opensInBrowserOnHover()
 
                 // Room for the longest text is kept below the image, so the grid never moves
                 // between slides, while the lines stay together when the title is short.
@@ -170,6 +159,7 @@ private struct MerchCard: View {
                         }
                     }
                     .clipShape(RoundedRectangle(cornerRadius: 5))
+                    .opensInBrowserOnHover()
                 .overlay(alignment: .topLeading) {
                     if fromAlbum {
                         Image(systemName: "music.note")
@@ -189,4 +179,33 @@ private struct MerchCard: View {
         .buttonStyle(.plain)
         .help([item.title, item.artist, item.type].compactMap { $0 }.joined(separator: " · "))
     }
+}
+
+/// On hover, a slight dim and a browser glyph: a click opens the item on Bandcamp, in the browser.
+private struct OpensInBrowserOnHover: ViewModifier {
+    @State private var hovering = false
+
+    func body(content: Content) -> some View {
+        content
+            .overlay {
+                if hovering {
+                    ZStack(alignment: .topTrailing) {
+                        Color.black.opacity(0.18)
+                        Image(systemName: "arrow.up.forward.app.fill")
+                            .font(.system(size: 18))
+                            .symbolRenderingMode(.palette)
+                            .foregroundStyle(.white, Color.accentColor)
+                            .shadow(radius: 3)
+                            .padding(8)
+                    }
+                    .allowsHitTesting(false)
+                    .transition(.opacity)
+                }
+            }
+            .onHover { inside in withAnimation(.easeOut(duration: 0.15)) { hovering = inside } }
+    }
+}
+
+private extension View {
+    func opensInBrowserOnHover() -> some View { modifier(OpensInBrowserOnHover()) }
 }

@@ -37,6 +37,7 @@ struct CommunityView: View {
                 HStack {
                     Text("\(artist.name) on Bandcamp").font(.caption).foregroundStyle(.secondary)
                     Spacer()
+                    FollowButton(site: artist.url, name: artist.name, bandID: community.bandID)
                     Button { NSWorkspace.shared.open(community.pageURL) } label: {
                         Image(systemName: "arrow.up.right.square")
                     }
@@ -134,12 +135,7 @@ struct CommunityView: View {
             postRow(story, label: preorder ? "Pre-order" : "New release", color: .orange) {
                 Button { if let url { Player.shared.playAlbum(at: url, by: artist) } } label: {
                     thumbnail(art, symbol: "music.note", size: 96)
-                        .overlay {
-                            Image(systemName: "play.circle.fill")
-                                .font(.largeTitle)
-                                .foregroundStyle(.white)
-                                .shadow(radius: 3)
-                        }
+                        .playGlyphOnHover()
                 }
                 .buttonStyle(.plain)
                 .disabled(url == nil)
@@ -163,7 +159,9 @@ struct CommunityView: View {
                     Text(start.formatted(date: .abbreviated, time: .shortened))
                         .font(.caption).foregroundStyle(.secondary)
                 }
-                if !text.isEmpty { Text(text).font(.callout).lineSpacing(4) }
+                if !text.isEmpty {
+                    Text(text).font(.callout).lineSpacing(4).fixedSize(horizontal: false, vertical: true)
+                }
             } open: { url ?? page }
 
         case let .message(text):
@@ -171,7 +169,10 @@ struct CommunityView: View {
                 thumbnail(nil, symbol: "text.bubble")
             } content: {
                 if let text {
-                    Text(text).font(.callout).lineSpacing(4).lineLimit(8).textSelection(.enabled)
+                    // Whole, always: a cut text grew over the next post when clicked.
+                    Text(text).font(.callout).lineSpacing(4)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .textSelection(.enabled)
                 } else {
                     Text("Only followers signed in on Bandcamp can read it.")
                         .font(.callout).italic().foregroundStyle(.secondary)
@@ -278,4 +279,32 @@ private struct SupporterAvatar: View {
         .clipShape(Circle())
         .onHover { inside in withAnimation(.easeOut(duration: 0.15)) { hovering = inside } }
     }
+}
+
+/// On hover only, a slight dim and a play glyph: a click plays the release.
+private struct PlayGlyphOnHover: ViewModifier {
+    @State private var hovering = false
+
+    func body(content: Content) -> some View {
+        content
+            .overlay {
+                if hovering {
+                    ZStack {
+                        Color.black.opacity(0.25)
+                        Image(systemName: "play.circle.fill")
+                            .font(.largeTitle)
+                            .foregroundStyle(.white)
+                            .shadow(radius: 3)
+                    }
+                    .clipShape(RoundedRectangle(cornerRadius: 5))
+                    .allowsHitTesting(false)
+                    .transition(.opacity)
+                }
+            }
+            .onHover { inside in withAnimation(.easeOut(duration: 0.15)) { hovering = inside } }
+    }
+}
+
+private extension View {
+    func playGlyphOnHover() -> some View { modifier(PlayGlyphOnHover()) }
 }

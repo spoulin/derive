@@ -204,9 +204,11 @@ struct PlayerView: View {
             .disabled(player.nowPlaying == nil)
 
             Button { player.nextAlbum() } label: {
-                Image(systemName: "shuffle").font(.system(size: 18))
+                // Dice, not the usual shuffle arrows: this picks another album at random, it
+                // doesn't mix the tracks.
+                Image(systemName: "dice").font(.system(size: 18))
             }
-            .help("Random album")
+            .help("Another album at random")
 
             Button { player.toggle() } label: {
                 Image(systemName: player.isPlaying ? "pause.circle.fill" : "play.circle.fill")

@@ -30,7 +30,7 @@ struct ArtistInfoView: View {
     private func loaded(_ info: ArtistInfo, page: URL) -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
-                header(info)
+                header(info, page: page)
                 if !info.bio.isEmpty { ExpandableText(text: info.bio, lines: 6) }
                 if !info.links.isEmpty { links(info.links) }
                 if !info.shows.isEmpty { shows(info.shows) }
@@ -42,7 +42,9 @@ struct ArtistInfoView: View {
     }
 
     /// The artist's photo as a banner, with the name and place over it.
-    @ViewBuilder private func header(_ info: ArtistInfo) -> some View {
+    @ViewBuilder private func header(_ info: ArtistInfo, page: URL) -> some View {
+        let site = ArtistStore.siteURL(from: page.absoluteString) ?? page
+        let follow = FollowButton(site: site, name: info.name, bandID: info.bandID)
         let names = VStack(alignment: .leading, spacing: 2) {
             Text(info.name).font(.title2.weight(.semibold))
             if let location = info.location {
@@ -60,9 +62,14 @@ struct ArtistInfoView: View {
                         .background(LinearGradient(colors: [.clear, .black.opacity(0.65)],
                                                    startPoint: .top, endPoint: .bottom))
                 }
+                .overlay(alignment: .topTrailing) { follow.padding(10) }
                 .clipShape(RoundedRectangle(cornerRadius: 6))
         } else {
-            names
+            HStack(alignment: .top) {
+                names
+                Spacer()
+                follow
+            }
         }
     }
 
