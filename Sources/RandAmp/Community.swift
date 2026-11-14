@@ -150,6 +150,14 @@ final class CommunityStore: ObservableObject {
     /// the session.
     func reset() { states = [:] }
 
+    /// Reads an artist's page again, after a follow or an unfollow: messages for followers show
+    /// or lock again. The page shown stays until the new one is read, and stays if that fails.
+    func reload(_ site: URL) async {
+        guard states[site] != nil, states[site] != .loading,
+              let fresh = try? await Bandcamp.community(at: site) else { return }
+        states[site] = .loaded(fresh)
+    }
+
     func load(_ site: URL) async {
         if case .loaded = states[site] { return }
         if states[site] == .loading { return }

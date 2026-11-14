@@ -51,6 +51,8 @@ struct FollowButton: View {
                 return
             }
             store.setFollowed(now, site: site, name: name, bandID: bandID)
+            // Messages for followers show (or lock again) in the Community tab.
+            await CommunityStore.shared.reload(site)
             Toast.shared.show(now ? "Following \(name): added to your artists"
                                   : "Unfollowed \(name): removed from your artists",
                               symbol: now ? "person.crop.circle.badge.checkmark" : "person.crop.circle.badge.minus")
