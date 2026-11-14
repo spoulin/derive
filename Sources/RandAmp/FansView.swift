@@ -131,45 +131,6 @@ struct FanAvatar: View {
     }
 }
 
-/// Follow or unfollow, in the banner of someone's collection.
-struct FanFollowButton: View {
-    let fanID: Int
-    let username: String
-    let name: String
-    let avatarURL: URL?
-
-    @ObservedObject private var store = FollowedFanStore.shared
-    @State private var working = false
-    @State private var hovering = false
-
-    private var following: Bool { store.isFollowing(fanID) }
-
-    var body: some View {
-        Button {
-            working = true
-            Task {
-                defer { working = false }
-                await setFollowing(!following, FollowedFan(id: fanID, username: username, name: name,
-                                                           avatarURL: avatarURL, location: nil))
-            }
-        } label: {
-            HStack(spacing: 3) {
-                if working {
-                    ProgressView().controlSize(.mini)
-                } else {
-                    Image(systemName: following ? (hovering ? "xmark" : "checkmark") : "plus")
-                }
-                Text(following ? (hovering ? "Unfollow" : "Following") : "Follow")
-            }
-        }
-        .controlSize(.small)
-        .disabled(working)
-        .onHover { hovering = $0 }
-        .help(following ? "You follow \(name) on Bandcamp. Click to unfollow."
-              : "Follow \(name) on Bandcamp: they join your Fans tab")
-    }
-}
-
 /// Follows or unfollows a fan on Bandcamp, then updates the Fans tab. Signed out, it opens the
 /// sign-in window.
 @MainActor

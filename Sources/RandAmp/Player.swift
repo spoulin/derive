@@ -206,15 +206,19 @@ final class Player: ObservableObject {
         Task { await startRandomAlbum() }
     }
 
-    /// What plays changed (Library or New Releases, Back to mine…). Playing, a new album from the
-    /// new source starts right away; paused or stopped, nothing starts by itself: Play will.
+    /// What plays changed (Library or New Releases, × in the footer…): the music stops, and nothing
+    /// starts by itself. Play then picks from the new source.
     private var pendingSwitch = false
     func switchSource() {
-        if isPlaying {
-            nextAlbum()
-        } else {
-            pendingSwitch = album != nil
-        }
+        if album != nil { stop() }
+    }
+
+    /// Library or New Releases, from the panel's selector, the menus, the Dock or a link: the
+    /// music stops, and Play then picks from the other side.
+    func setNewReleases(_ on: Bool) {
+        guard on != newReleases else { return }
+        newReleases = on
+        switchSource()
     }
 
     /// Plays a random album of this artist, from its first track, and turns radio mode off.
@@ -658,17 +662,25 @@ final class Player: ObservableObject {
             // Album finished: another random album by the same artist.
             Task { await startRandomAlbum(only: currentArtist, excluding: album.pageURL) }
         } else {
-            self.album = nil
-            player.replaceCurrentItem(with: nil)
-            isPlaying = false
-            nowPlaying = nil
-            artist = nil
-            artURL = nil
-            pageURL = nil
-            clock.elapsed = 0
-            clock.duration = 0
-            showCover(nil)
+            stop()
         }
+    }
+
+    /// Stops and unloads the album: nothing playing, an empty cover. Play then picks a new one.
+    func stop() {
+        player.pause()
+        album = nil
+        player.replaceCurrentItem(with: nil)
+        isPlaying = false
+        nowPlaying = nil
+        artist = nil
+        artURL = nil
+        pageURL = nil
+        clock.elapsed = 0
+        clock.duration = 0
+        upcoming = nil
+        pendingSwitch = false
+        showCover(nil)
     }
 
     private func loadCover(_ url: URL?) {

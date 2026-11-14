@@ -36,7 +36,7 @@ struct AppMenu: View {
         Menu {
             Toggle("Favorites", isOn: $player.favoritesOnly)
             Toggle("Fans Mix", isOn: $player.fansMix)
-            Toggle("New Releases", isOn: $player.newReleases)
+            Toggle("New Releases", isOn: Binding(get: { player.newReleases }, set: { player.setNewReleases($0) }))
             Toggle("Radio", isOn: $player.radio)
                 .disabled(player.favoritesOnly)
             Divider()

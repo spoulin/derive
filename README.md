@@ -309,16 +309,18 @@ When nothing else can play, a track plays again rather than nothing. Off by defa
 ## Someone else's collection
 
 Click a fan, among the recent supporters of the Community tab or the fan comments of the (i) tab,
-to shuffle in their public Bandcamp collection instead of your artists. A blue banner at the top
-of the player shows their picture and name, and how much of the collection is loaded; the rest
-loads in the background, unhurried. Click the name to open their Bandcamp page.
+to shuffle in their public Bandcamp collection instead of your artists. A line in the middle of
+the player's footer shows their picture and name, **Follow**, and × to go back to your artists.
+Click the name to open their Bandcamp page; point at it to see how much of the collection is
+loaded (the rest loads in the background, unhurried). Right-click the line for the same actions,
+when the window is too narrow to show it all.
 
 Radio works there as with your artists: on, a random track of their collection after each track;
 off, whole albums of their collection, one after the other. **Favorites** leaves their collection
 to play your thumbs up.
 
-Click **Back to mine** in the banner to return to your artists, with a new random pick right
-away. Playing an artist from your list, a new release from Community, or turning on Favorites
+Click × in that line to return to your artists: the music stops, and Play picks
+from your artists again. Playing an artist from your list, a new release from Community, or turning on Favorites
 also brings you back. The collection isn't kept: at launch, RandAmp is back with your artists.
 
 ## Fans you follow
@@ -326,7 +328,7 @@ also brings you back. The collection isn't kept: at launch, RandAmp is back with
 Like artists, fans can be followed on Bandcamp, to find their collection again. Signed in to
 Bandcamp (see [Signing in to Bandcamp](#signing-in-to-bandcamp)):
 
-- in someone's collection, click **Follow** in the blue banner;
+- in someone's collection, click **Follow** in the line at the bottom of the player;
 - or right-click a recent supporter (Community tab) or a fan comment ((i) tab), and choose
   **Follow on Bandcamp**.
 
@@ -341,8 +343,9 @@ In the Fans tab:
   playing.
 - **Random Fan** picks one of them at random and shuffles in their collection.
 - **Fans mix** takes each album from the collection of a fan you follow, picked at random: one
-  fan's album, then another fan's. A banner shows whose collection the album comes from;
-  **Back to mine** turns the mix off. Radio works in the mix too. Fans mix is also in the "…"
+  fan's album, then another fan's. A line in the middle of the player's footer shows whose
+  collection the album comes from (click it to open the Fans tab); its × turns the mix off and
+  stops the music. Radio works in the mix too. Fans mix is also in the "…"
   menu, and stays on from one launch to the next. Favorites, someone's collection, or playing an
   artist or a new release turns it off.
 - Right-click a fan to open their Bandcamp page or unfollow them.
@@ -353,8 +356,8 @@ In the Fans tab:
 [Bandcamp Discover](https://bandcamp.com/discover), in the styles you choose.
 
 At the top right of the side panel, **Library | New Releases** chooses what plays and what the
-right tabs show. **New Releases** turns the mode on, plays a new release right away, and shows
-two tabs: **Styles** (a tag, with the number of styles chosen) and **Latest** (sparkles, with the
+right tabs show. Switching from one to the other stops the music; Play then picks from the
+other side, and nothing starts by itself. **New Releases** shows two tabs: **Styles** (a tag, with the number of styles chosen) and **Latest** (sparkles, with the
 number of releases listed). **Library** goes back to your artists and their tabs (artists, fans,
 thumbs up and down, history). The tabs of the album playing stay on the left. New Releases is
 also in a "…" menu, the Playback menu and the Dock menu.
@@ -369,8 +372,8 @@ also in a "…" menu, the Playback menu and the Dock menu.
 - **Latest** lists those releases, newest added first, with the release date the artist
   gave (an old album put on Bandcamp this week shows its year). Click a cover to play that
   release from its first track; another new release follows.
-- A banner shows the styles while the mode is on: click its title to open Styles, or
-  **Back to mine** to go back to your artists, like **Library**. Favorites, Fans
+- A line in the middle of the player's footer shows the styles while the mode is on: click it to
+  open Styles, or its × to go back to your artists, like **Library**. Favorites, Fans
   mix, someone's collection, or playing an artist turns it off too.
 
 The list comes from the endpoint Bandcamp's Discover page loads its results from. It isn't a

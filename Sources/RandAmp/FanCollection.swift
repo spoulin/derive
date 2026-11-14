@@ -113,7 +113,7 @@ final class GuestCollection: ObservableObject {
                 token = batch.nextToken
             }
         }
-        Toast.shared.show("Shuffling in \(name)'s collection. Click Back to mine to return.",
+        Toast.shared.show("Shuffling in \(name)'s collection. Click × at the bottom to return.",
                           symbol: "person.crop.circle")
         return true
     }

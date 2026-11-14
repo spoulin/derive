@@ -42,8 +42,7 @@ struct PlayerWindowContent: View {
                                 UserDefaults.standard.set(on ? ArtistsView.Tab.latest.rawValue
                                                              : ArtistsView.Tab.artists.rawValue,
                                                           forKey: "panelTab")
-                                player.newReleases = on
-                                player.switchSource()
+                                player.setNewReleases(on)
                             }
                         )) {
                             Text("Library").tag(ArtistsView.PanelSection.library)
@@ -108,9 +107,6 @@ struct PlayerView: View {
 
     var body: some View {
         VStack(spacing: 10) {
-            if guest.isActive { guestBanner }
-            if player.fansMix { fansMixBanner }
-            if player.newReleases { newReleasesBanner }
             // In a tall or wide window, the cover, the timeline, the controls and the titles stay
             // together, centered; only the footer stays at the bottom.
             Spacer(minLength: 0)
@@ -129,6 +125,7 @@ struct PlayerView: View {
             status
             Spacer(minLength: 0)
             Divider()
+            if style == .menu { sourceLine.font(.caption).buttonStyle(.plain) }
             footer
         }
         // Says what an action just did, over the bottom of the player.
@@ -148,118 +145,6 @@ struct PlayerView: View {
     }
 
     /// While shuffling in someone else's collection: whose it is, and the way back.
-    private var guestBanner: some View {
-        HStack(spacing: 8) {
-            let side: CGFloat = style == .menu ? 22 : 30
-            Group {
-                if let avatar = guest.avatarURL {
-                    AsyncImage(url: avatar) { image in
-                        image.resizable().scaledToFill()
-                    } placeholder: {
-                        Circle().fill(.quaternary)
-                    }
-                } else {
-                    Image(systemName: "person.crop.circle.fill").resizable().foregroundStyle(.secondary)
-                }
-            }
-            .frame(width: side, height: side)
-            .clipShape(Circle())
-            VStack(alignment: .leading, spacing: 1) {
-                Button { if let url = guest.profileURL { NSWorkspace.shared.open(url) } } label: {
-                    Text("\(guest.name)'s collection").fontWeight(.semibold).lineLimit(1)
-                }
-                .buttonStyle(.plain)
-                .help("Open their Bandcamp page")
-                // The name is right above: no "their", which can read as plural.
-                Text(guest.items.count < guest.total
-                     ? "Shuffling \(guest.items.count) of \(guest.total) releases, more loading…"
-                     : "Shuffling all \(guest.total) releases")
-                    .font(.caption2).foregroundStyle(.secondary).lineLimit(1)
-            }
-            Spacer(minLength: 4)
-            if let fanID = guest.fanID, let username = guest.username {
-                FanFollowButton(fanID: fanID, username: username, name: guest.name, avatarURL: guest.avatarURL)
-            }
-            Button("Back to mine") { player.leaveCollection() }
-                .controlSize(.small)
-                .help("Leave this collection and shuffle your own artists again")
-        }
-        .font(style == .menu ? .caption : .callout)
-        .padding(.horizontal, 10)
-        .padding(.vertical, 7)
-        .background(Color.accentColor.opacity(0.28), in: RoundedRectangle(cornerRadius: 8))
-        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.accentColor.opacity(0.6)))
-    }
-
-    /// New Releases, while it's on: the styles, and the way out.
-    private var newReleasesBanner: some View {
-        HStack(spacing: 8) {
-            let side: CGFloat = style == .menu ? 22 : 30
-            Image(systemName: "sparkles")
-                .font(.system(size: side * 0.55))
-                .frame(width: side, height: side)
-                .background(Color.accentColor.opacity(0.35), in: Circle())
-            VStack(alignment: .leading, spacing: 1) {
-                Button { PlayerWindow.showNewReleases() } label: {
-                    Text("New releases").fontWeight(.semibold).lineLimit(1)
-                }
-                .buttonStyle(.plain)
-                .help("Choose the styles in the New tab")
-                let styles = NewReleaseStore.shared.tags
-                Text(styles.isEmpty ? "Just added to Bandcamp, all styles" : "Just added: \(styles.joined(separator: " + "))")
-                    .font(.caption2).foregroundStyle(.secondary).lineLimit(1)
-            }
-            Spacer(minLength: 4)
-            Button("Back to mine") {
-                player.newReleases = false
-                player.switchSource()
-            }
-            .controlSize(.small)
-            .help("Turn off New releases and shuffle your own artists again")
-        }
-        .font(style == .menu ? .caption : .callout)
-        .padding(.horizontal, 10)
-        .padding(.vertical, 7)
-        .background(Color.accentColor.opacity(0.28), in: RoundedRectangle(cornerRadius: 8))
-        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.accentColor.opacity(0.6)))
-    }
-
-    /// The fans mix, while it's on: whose collection the album comes from, and the way out.
-    private var fansMixBanner: some View {
-        HStack(spacing: 8) {
-            let side: CGFloat = style == .menu ? 22 : 30
-            let fan = player.mixFan
-            FanAvatar(url: fan?.avatarURL, side: side)
-            VStack(alignment: .leading, spacing: 1) {
-                if let fan {
-                    Button { NSWorkspace.shared.open(fan.profileURL) } label: {
-                        Text("From \(fan.name)'s collection").fontWeight(.semibold).lineLimit(1)
-                    }
-                    .buttonStyle(.plain)
-                    .help("Open their Bandcamp page")
-                } else {
-                    Text("Fans mix").fontWeight(.semibold).lineLimit(1)
-                }
-                let count = FollowedFanStore.shared.fans.count
-                Text(count == 1 ? "Mixing the collection of the fan you follow"
-                                : "Mixing the collections of the \(count) fans you follow")
-                    .font(.caption2).foregroundStyle(.secondary).lineLimit(1)
-            }
-            Spacer(minLength: 4)
-            Button("Back to mine") {
-                player.fansMix = false
-                player.switchSource()
-            }
-            .controlSize(.small)
-            .help("Turn off the fans mix and shuffle your own artists again")
-        }
-        .font(style == .menu ? .caption : .callout)
-        .padding(.horizontal, 10)
-        .padding(.vertical, 7)
-        .background(Color.accentColor.opacity(0.28), in: RoundedRectangle(cornerRadius: 8))
-        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.accentColor.opacity(0.6)))
-    }
-
     private var cover: some View {
         // The square sets the size; the image is laid over it and clipped to it, so a cover
         // that isn't square can't spill out of its frame.
@@ -388,7 +273,9 @@ struct PlayerView: View {
             }
             .disabled(player.pageURL == nil)
             .help("Open the current album on Bandcamp")
-            Spacer()
+            // Both sides take the same width, so the middle sits right under the player.
+            .frame(maxWidth: style == .window ? .infinity : nil, alignment: .leading)
+            if style == .menu { Spacer() }
             // The side panel holds more than the artists now: the artist playing, their community
             // and merch, and your library. macOS's sidebar symbol, blue while open.
             switch style {
@@ -398,10 +285,11 @@ struct PlayerView: View {
                 }
                 .help("Open the player window with its side panel: the artist playing, your artists and your history")
             case .window:
-                // In the window, the panel's switch is in the title bar.
-                EmptyView()
+                // In the window, the panel's switch is in the title bar; the middle says where
+                // the music comes from, when it isn't your artists.
+                sourceLine
             }
-            Spacer()
+            if style == .menu { Spacer() }
             switch style {
             case .menu:
                 AppMenu()
@@ -424,9 +312,124 @@ struct PlayerView: View {
                         .toggleStyle(.checkbox)
                         .help("Keep this window above other apps")
                 }
+                .fixedSize()
+                .frame(maxWidth: .infinity, alignment: .trailing)
             }
         }
         .buttonStyle(.plain).font(.caption)
+    }
+
+    /// Where the music comes from, when it isn't your artists: someone's collection (with their
+    /// photo and Follow), the new releases and their styles, or the fans mix and the fan of the
+    /// album playing. Click to see more; × goes back to your artists.
+    @ViewBuilder private var sourceLine: some View {
+        if guest.isActive {
+            GuestLine()
+        } else if player.newReleases || player.fansMix {
+            HStack(spacing: 5) {
+                Button {
+                    if player.newReleases {
+                        PlayerWindow.showNewReleases()
+                    } else {
+                        PlayerWindow.showFans()
+                    }
+                } label: {
+                    if player.newReleases {
+                        let styles = NewReleaseStore.shared.tags
+                        Label("New releases · " + (styles.isEmpty ? "all styles" : styles.joined(separator: " + ")),
+                              systemImage: "sparkles")
+                    } else {
+                        Label("Fans mix" + (player.mixFan.map { " · from \($0.name)" } ?? ""),
+                              systemImage: "person.2")
+                    }
+                }
+                .lineLimit(1)
+                .truncationMode(.middle)
+                .help(player.newReleases ? "Playing the latest releases added to Bandcamp. Click to choose the styles."
+                                         : "Playing from the collections of the fans you follow. Click to see them.")
+                Button {
+                    if player.newReleases {
+                        player.setNewReleases(false)
+                    } else {
+                        player.fansMix = false
+                        player.switchSource()
+                    }
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                }
+                .foregroundStyle(.tertiary)
+                .help("Back to your artists")
+            }
+            .foregroundStyle(.secondary)
+        }
+    }
+}
+
+/// Someone's collection, in the footer: their photo and name (their Bandcamp page), Follow, and
+/// × to go back to your artists. The right-click menu has the same, for a narrow window.
+private struct GuestLine: View {
+    @ObservedObject private var guest = GuestCollection.shared
+    @ObservedObject private var fans = FollowedFanStore.shared
+    @State private var working = false
+
+    private var fan: FollowedFan? {
+        guard let fanID = guest.fanID, let username = guest.username else { return nil }
+        return FollowedFan(id: fanID, username: username, name: guest.name, avatarURL: guest.avatarURL, location: nil)
+    }
+    private var following: Bool { guest.fanID.map(fans.isFollowing) ?? false }
+
+    var body: some View {
+        HStack(spacing: 5) {
+            Button { if let url = guest.profileURL { NSWorkspace.shared.open(url) } } label: {
+                HStack(spacing: 5) {
+                    AsyncImage(url: guest.avatarURL) { image in
+                        image.resizable().scaledToFill()
+                    } placeholder: {
+                        Image(systemName: "person.crop.circle.fill").resizable()
+                    }
+                    .frame(width: 14, height: 14)
+                    .clipShape(Circle())
+                    Text("\(guest.name)'s collection").lineLimit(1).truncationMode(.middle)
+                }
+            }
+            .help(guest.items.count < guest.total
+                  ? "Shuffling \(guest.items.count) of \(guest.total) releases, more loading. Click to open their Bandcamp page."
+                  : "Shuffling all \(guest.total) releases. Click to open their Bandcamp page.")
+            if fan != nil {
+                Text("·")
+                Button(action: toggleFollow) {
+                    if working {
+                        ProgressView().controlSize(.mini)
+                    } else {
+                        Text(following ? "✓ Following" : "+ Follow")
+                    }
+                }
+                .disabled(working)
+                .help(following ? "You follow \(guest.name) on Bandcamp. Click to unfollow."
+                                : "Follow \(guest.name) on Bandcamp: they join your Fans tab")
+            }
+            Button { Player.shared.leaveCollection() } label: { Image(systemName: "xmark.circle.fill") }
+                .foregroundStyle(.tertiary)
+                .help("Back to your artists")
+        }
+        .foregroundStyle(.secondary)
+        .contextMenu {
+            if fan != nil {
+                Button(following ? "Unfollow on Bandcamp" : "Follow on Bandcamp", action: toggleFollow)
+            }
+            Button("Open on Bandcamp") { if let url = guest.profileURL { NSWorkspace.shared.open(url) } }
+            Divider()
+            Button("Back to My Artists") { Player.shared.leaveCollection() }
+        }
+    }
+
+    private func toggleFollow() {
+        guard let fan else { return }
+        working = true
+        Task {
+            defer { working = false }
+            await setFollowing(!following, fan)
+        }
     }
 }
 
@@ -512,6 +515,12 @@ enum PlayerWindow {
     static func showArtists() {
         show()
         setArtists(true)
+    }
+
+    /// Opens the player window with the panel on the fans you follow.
+    static func showFans() {
+        UserDefaults.standard.set(ArtistsView.Tab.fans.rawValue, forKey: "panelTab")
+        showArtists()
     }
 
     /// Opens the player window with the panel on the styles of the new releases.
