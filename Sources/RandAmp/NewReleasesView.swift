@@ -107,9 +107,11 @@ struct NewReleasesView: View {
         return artist.tags.map(NewReleaseStore.normalized).filter { !$0.isEmpty && seen.insert($0).inserted }
     }
 
-    /// A row of styles to add in a click, without those already chosen. Nothing when empty.
+    /// A row of styles to add in a click, in alphabetical order, without those already chosen.
+    /// Nothing when empty.
     @ViewBuilder private func suggestions(_ title: String, _ tags: [String]) -> some View {
         let available = tags.filter { !store.tags.contains($0) }
+            .sorted { $0.localizedStandardCompare($1) == .orderedAscending }
         if !available.isEmpty {
             VStack(alignment: .leading, spacing: 4) {
                 Text(title).font(.caption.weight(.semibold)).foregroundStyle(.secondary)
