@@ -31,6 +31,33 @@ struct PlayerWindowContent: View {
             if panel.isOpen {
                 ArtistsView()
                     .frame(width: ArtistsPanel.width)
+                    // Library or New Releases, in the panel's part of the title bar. It plays what it
+                    // shows: your artists, or the latest releases on Bandcamp, right away.
+                    .overlay(alignment: .topTrailing) {
+                        Picker("Panel", selection: Binding(
+                            get: { player.newReleases ? ArtistsView.PanelSection.newReleases : .library },
+                            set: { newSection in
+                                let on = newSection == .newReleases
+                                guard on != player.newReleases else { return }
+                                UserDefaults.standard.set(on ? ArtistsView.Tab.latest.rawValue
+                                                             : ArtistsView.Tab.artists.rawValue,
+                                                          forKey: "panelTab")
+                                player.newReleases = on
+                                player.switchSource()
+                            }
+                        )) {
+                            Text("Library").tag(ArtistsView.PanelSection.library)
+                            Text("New Releases").tag(ArtistsView.PanelSection.newReleases)
+                        }
+                        .pickerStyle(.segmented)
+                        .labelsHidden()
+                        .controlSize(.small)
+                        .fixedSize()
+                        .help("Play from your library, or from the latest releases on Bandcamp")
+                        .padding(.top, 4)
+                        .padding(.trailing, 14)
+                        .ignoresSafeArea(edges: .top)
+                    }
                     .background(.black.opacity(0.22))
                     // Sized first: in a tall window, the square cover must not push the panel out.
                     .layoutPriority(1)
@@ -83,6 +110,7 @@ struct PlayerView: View {
         VStack(spacing: 10) {
             if guest.isActive { guestBanner }
             if player.fansMix { fansMixBanner }
+            if player.newReleases { newReleasesBanner }
             // In a tall or wide window, the cover, the timeline, the controls and the titles stay
             // together, centered; only the footer stays at the bottom.
             Spacer(minLength: 0)
@@ -163,6 +191,39 @@ struct PlayerView: View {
         .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.accentColor.opacity(0.6)))
     }
 
+    /// New Releases, while it's on: the styles, and the way out.
+    private var newReleasesBanner: some View {
+        HStack(spacing: 8) {
+            let side: CGFloat = style == .menu ? 22 : 30
+            Image(systemName: "sparkles")
+                .font(.system(size: side * 0.55))
+                .frame(width: side, height: side)
+                .background(Color.accentColor.opacity(0.35), in: Circle())
+            VStack(alignment: .leading, spacing: 1) {
+                Button { PlayerWindow.showNewReleases() } label: {
+                    Text("New releases").fontWeight(.semibold).lineLimit(1)
+                }
+                .buttonStyle(.plain)
+                .help("Choose the styles in the New tab")
+                let styles = NewReleaseStore.shared.tags
+                Text(styles.isEmpty ? "Just added to Bandcamp, all styles" : "Just added: \(styles.joined(separator: " + "))")
+                    .font(.caption2).foregroundStyle(.secondary).lineLimit(1)
+            }
+            Spacer(minLength: 4)
+            Button("Back to mine") {
+                player.newReleases = false
+                player.switchSource()
+            }
+            .controlSize(.small)
+            .help("Turn off New releases and shuffle your own artists again")
+        }
+        .font(style == .menu ? .caption : .callout)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 7)
+        .background(Color.accentColor.opacity(0.28), in: RoundedRectangle(cornerRadius: 8))
+        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.accentColor.opacity(0.6)))
+    }
+
     /// The fans mix, while it's on: whose collection the album comes from, and the way out.
     private var fansMixBanner: some View {
         HStack(spacing: 8) {
@@ -187,7 +248,7 @@ struct PlayerView: View {
             Spacer(minLength: 4)
             Button("Back to mine") {
                 player.fansMix = false
-                player.nextAlbum()
+                player.switchSource()
             }
             .controlSize(.small)
             .help("Turn off the fans mix and shuffle your own artists again")
@@ -211,6 +272,17 @@ struct PlayerView: View {
                         Image(nsImage: cover).resizable().scaledToFill()
                             .id(player.coverID)
                             .transition(.opacity)
+                    } else {
+                        // Nothing loaded yet: say so, and how to start.
+                        VStack(spacing: 4) {
+                            Text("Nothing playing").font(style == .menu ? .callout : .title3.weight(.medium))
+                            Text("Press Play for a random album").font(style == .menu ? .caption : .callout)
+                                .foregroundStyle(.tertiary)
+                        }
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding()
+                        .transition(.opacity)
                     }
                 }
                 .animation(.easeInOut(duration: 1), value: player.coverID)
@@ -440,6 +512,12 @@ enum PlayerWindow {
     static func showArtists() {
         show()
         setArtists(true)
+    }
+
+    /// Opens the player window with the panel on the styles of the new releases.
+    static func showNewReleases() {
+        UserDefaults.standard.set(ArtistsView.Tab.styles.rawValue, forKey: "panelTab")
+        showArtists()
     }
 
     static func toggleArtists() {

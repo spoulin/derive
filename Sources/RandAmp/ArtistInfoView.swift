@@ -264,7 +264,7 @@ private struct ExpandableList<Item: Identifiable, Row: View>: View {
 }
 
 /// Lays its views out left to right, wrapping to a new line when the width runs out.
-private struct FlowLayout: Layout {
+struct FlowLayout: Layout {
     var spacing: CGFloat = 6
 
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {

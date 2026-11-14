@@ -127,7 +127,7 @@ extension Bandcamp {
     }
 
     private static func imageURL(id: Int, size: Int) -> URL? {
-        URL(string: String(format: "https://f4.bcbits.com/img/%010d_%d.jpg", id, size))
+        URL(string: String(format: "https://f4.bcbits.com/img/%010ld_%d.jpg", id, size))
     }
 }
 

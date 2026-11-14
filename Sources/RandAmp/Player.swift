@@ -35,8 +35,10 @@ final class Player: ObservableObject {
         didSet {
             UserDefaults.standard.set(favoritesOnly, forKey: "favoritesOnly")
             upcoming = nil
+            // Paused: Play then starts from the new source rather than resuming.
+            if !isPlaying, album != nil { pendingSwitch = true }
             guard favoritesOnly != oldValue else { return }
-            if favoritesOnly { guest.leave(); fansMix = false }
+            if favoritesOnly { guest.leave(); fansMix = false; newReleases = false }
             if favoritesOnly, likes.tracks.isEmpty {
                 favoritesOnly = false
                 Toast.shared.show("No thumbs up yet: give tracks a thumbs up to play your favorites",
@@ -54,9 +56,11 @@ final class Player: ObservableObject {
         didSet {
             UserDefaults.standard.set(fansMix, forKey: "fansMix")
             upcoming = nil
+            // Paused: Play then starts from the new source rather than resuming.
+            if !isPlaying, album != nil { pendingSwitch = true }
             if !fansMix { mixFan = nil }
             guard fansMix != oldValue else { return }
-            if fansMix { guest.leave(announce: false); favoritesOnly = false }
+            if fansMix { guest.leave(announce: false); favoritesOnly = false; newReleases = false }
             if fansMix, FollowedFanStore.shared.fans.isEmpty {
                 fansMix = false
                 Toast.shared.show("You follow no fans yet: follow some from Community or a fan's collection",
@@ -70,6 +74,23 @@ final class Player: ObservableObject {
     }
     /// In the fans mix, the fan whose collection the album playing comes from.
     @Published private(set) var mixFan: FollowedFan?
+
+    /// New Releases: each album is one of the latest added to Bandcamp, in the styles chosen.
+    @Published var newReleases = UserDefaults.standard.bool(forKey: "newReleases") {
+        didSet {
+            UserDefaults.standard.set(newReleases, forKey: "newReleases")
+            upcoming = nil
+            // Paused: Play then starts from the new source rather than resuming.
+            if !isPlaying, album != nil { pendingSwitch = true }
+            guard newReleases != oldValue else { return }
+            if newReleases { guest.leave(announce: false); favoritesOnly = false; fansMix = false }
+            let styles = NewReleaseStore.shared.tags
+            Toast.shared.show(newReleases
+                              ? "New releases on: just added to Bandcamp" + (styles.isEmpty ? "" : ", \(styles.joined(separator: " + "))")
+                              : "New releases off: back to your artists",
+                              symbol: newReleases ? "sparkles" : "house")
+        }
+    }
 
     static let shared = Player()
 
@@ -160,6 +181,10 @@ final class Player: ObservableObject {
         if isPlaying {
             player.pause()
             isPlaying = false
+        } else if pendingSwitch {
+            // What plays changed while paused: Play starts from the new source.
+            pendingSwitch = false
+            Task { await startRandomAlbum() }
         } else if album != nil, player.currentItem != nil {
             player.play()
             isPlaying = true
@@ -181,6 +206,17 @@ final class Player: ObservableObject {
         Task { await startRandomAlbum() }
     }
 
+    /// What plays changed (Library or New Releases, Back to mine…). Playing, a new album from the
+    /// new source starts right away; paused or stopped, nothing starts by itself: Play will.
+    private var pendingSwitch = false
+    func switchSource() {
+        if isPlaying {
+            nextAlbum()
+        } else {
+            pendingSwitch = album != nil
+        }
+    }
+
     /// Plays a random album of this artist, from its first track, and turns radio mode off.
     /// Works even when the artist is turned off.
     func playArtist(_ artist: Artist) {
@@ -188,17 +224,20 @@ final class Player: ObservableObject {
         radio = false
         favoritesOnly = false
         fansMix = false
+        newReleases = false
         player.pause()
         Task { await startRandomAlbum(only: artist) }
     }
 
     /// Plays one release from its first track (skipping thumbs down), and turns radio mode off so
-    /// the whole release plays. Used by the Community tab's new releases.
-    func playAlbum(at url: URL, by artist: Artist) {
+    /// the whole release plays. Used by the Community tab's new releases, and by the New tab, which
+    /// keeps the New Releases mode on: another new release follows.
+    func playAlbum(at url: URL, by artist: Artist, keepNewReleases: Bool = false) {
         guest.leave()
         radio = false
         favoritesOnly = false
         fansMix = false
+        if !keepNewReleases { newReleases = false }
         player.pause()
         Task {
             guard !isLoading else { return }
@@ -303,6 +342,11 @@ final class Player: ObservableObject {
             errorMessage = "Couldn't play from \(guest.name)'s collection"
             return
         }
+        if chosen == nil, newReleases {
+            if let pick = await randomNewRelease(excluding: excluded) { return start(pick) }
+            errorMessage = NewReleaseStore.shared.error ?? "No new releases to play in these styles"
+            return
+        }
         if chosen == nil, fansMix {
             if let pick = await randomFanMixPick(excluding: excluded) { return start(pick) }
             errorMessage = "Couldn't play from the collections of the fans you follow"
@@ -350,12 +394,13 @@ final class Player: ObservableObject {
 
     private func start(_ pick: Pick) {
         upcoming = nil
+        pendingSwitch = false
         album = pick.album
         artist = pick.artist.name
         currentArtist = pick.artist
         index = pick.index
         playCurrent()
-        if radio, !favoritesOnly, !guest.isActive, !fansMix { prefetch() }
+        if radio, !favoritesOnly, !guest.isActive, !fansMix, !newReleases { prefetch() }
     }
 
     private var guest: GuestCollection { .shared }
@@ -364,6 +409,7 @@ final class Player: ObservableObject {
     func shuffleCollection(of username: String, avatar: URL? = nil) {
         favoritesOnly = false
         fansMix = false
+        newReleases = false
         Task {
             guard await guest.enter(username, avatar: avatar) else { return }
             player.pause()
@@ -371,11 +417,12 @@ final class Player: ObservableObject {
         }
     }
 
-    /// Back to your own artists, with a new random pick right away.
+    /// Back to your own artists: a new random pick right away while playing, at the next Play
+    /// otherwise.
     func leaveCollection() {
         guard guest.isActive else { return }
         guest.leave()
-        nextAlbum()
+        switchSource()
     }
 
     /// Shuffles in the collection of a fan you follow, picked at random (not the one playing).
@@ -399,6 +446,15 @@ final class Player: ObservableObject {
             }
         }
         return nil
+    }
+
+    /// One of the latest releases added to Bandcamp in the styles chosen, not heard lately when
+    /// there is one: a random track of it in radio mode, its first track otherwise.
+    private func randomNewRelease(excluding excluded: URL? = nil) async -> Pick? {
+        let store = NewReleaseStore.shared
+        await store.load()
+        let items = store.releases.map { CollectionItem(title: $0.title, artist: $0.artist, url: $0.url) }
+        return await randomCollectionPick(from: items, excluding: excluded)
     }
 
     private func randomGuestPick(excluding excluded: URL? = nil) async -> Pick? {
@@ -594,8 +650,9 @@ final class Player: ObservableObject {
         while index < album.tracks.count, dislikes.contains(album.tracks[index].id) { index += 1 }
         if index < album.tracks.count {
             playCurrent()
-        } else if guest.isActive || fansMix {
-            // Album finished, in someone's collection or the fans mix: another album from there.
+        } else if guest.isActive || fansMix || newReleases {
+            // Album finished, in someone's collection, the fans mix or the new releases: another
+            // album from there.
             Task { await startRandomAlbum(excluding: album.pageURL) }
         } else if let currentArtist {
             // Album finished: another random album by the same artist.

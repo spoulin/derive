@@ -35,6 +35,7 @@ RandAmp was called Dérive until version 1.0.
 - The artist's community page: new releases to play, listening parties, recent supporters
 - Shuffle in a fan's collection, from a supporter or a fan comment, and back to yours in a click
 - Follow fans on Bandcamp, list them, shuffle in a random one's collection, or mix all their collections
+- New releases: the latest albums added to Bandcamp, in the styles you choose
 
 ## Install
 
@@ -215,7 +216,9 @@ seconds later. On a short track, the next track starts the cycle again. A tab wi
 show is skipped: no community page or posts, or no merch still available. Click a tab to stop
 this until the next track. While one of your library tabs is open, the panel stays on it.
 
-On the right, your library. These tabs don't change with the music:
+On the right, your library, when **Library** is chosen at the top right of the panel (**New
+Releases** shows the tabs of [New releases](#new-releases) instead). These tabs don't change with
+the music:
 
 | Icon | Tab | Number |
 | --- | --- | --- |
@@ -344,6 +347,35 @@ In the Fans tab:
   artist or a new release turns it off.
 - Right-click a fan to open their Bandcamp page or unfollow them.
 
+## New releases
+
+**New releases** plays the latest albums added to Bandcamp, like the "new arrivals" of
+[Bandcamp Discover](https://bandcamp.com/discover), in the styles you choose.
+
+At the top right of the side panel, **Library | New Releases** chooses what plays and what the
+right tabs show. **New Releases** turns the mode on, plays a new release right away, and shows
+two tabs: **Styles** (a tag, with the number of styles chosen) and **Latest** (sparkles, with the
+number of releases listed). **Library** goes back to your artists and their tabs (artists, fans,
+thumbs up and down, history). The tabs of the album playing stay on the left. New Releases is
+also in a "…" menu, the Playback menu and the Dock menu.
+
+- Each album is picked at random among the 100 latest added in those styles, skipping what you
+  heard lately. Radio works too: a random track of a new release after each track.
+- **Styles**: type any Bandcamp tag in the field (shoegaze, dub techno…), or click one of the
+  suggestions: **From the album playing** (its tags, as on its Bandcamp page: hear something you
+  like, add its style), **Recent** (the last styles you added), and Bandcamp's main **Genres**. Places are tags too: montreal, berlin. Each style added narrows the list: releases
+  with all of them (ambient + drone, ambient + montreal). RandAmp checks with Bandcamp before
+  adding a style, and says how many releases have them. No style: everything new on Bandcamp.
+- **Latest** lists those releases, newest added first, with the release date the artist
+  gave (an old album put on Bandcamp this week shows its year). Click a cover to play that
+  release from its first track; another new release follows.
+- A banner shows the styles while the mode is on: click its title to open Styles, or
+  **Back to mine** to go back to your artists, like **Library**. Favorites, Fans
+  mix, someone's collection, or playing an artist turns it off too.
+
+The list comes from the endpoint Bandcamp's Discover page loads its results from. It isn't a
+documented API: Bandcamp may change it, and the mode would then stop working.
+
 ## Merch
 
 The **Merch** tab of the side panel shows what the artist playing sells on Bandcamp: CDs,
@@ -376,7 +408,7 @@ leaves the Dock; the music goes on, and the menu bar icon stays.
 
 - Click the Dock icon to bring the window back.
 - Right-click it for the controls: Play/Pause, Next Track, New Random Album, Thumbs Up, Thumbs
-  Down, Radio, Favorites, Fans Mix.
+  Down, Radio, Favorites, Fans Mix, New Releases.
 - The **RandAmp** menu has Check for Updates. The **Playback** menu has the same controls, with
   shortcuts: ⌥⌘P play/pause, ⌘→ next track, ⌘R new random album, ⌘↑ thumbs up, ⌘↓ thumbs
   down, ⌥⌘S side panel.
@@ -421,6 +453,7 @@ The app handles `randamp://` URLs while it is running:
 | `randamp://favorites` | Turn Favorites on or off |
 | `randamp://fansmix` | Turn Fans mix on or off |
 | `randamp://randomfan` | Shuffle in the collection of a fan you follow, picked at random |
+| `randamp://newreleases` | Turn New releases on or off |
 | `randamp://collection?user=name` | Shuffle in a fan's collection; `randamp://collection` alone goes back to yours |
 | `randamp://signin` | Open the Bandcamp sign-in window |
 | `randamp://artist?url=name.bandcamp.com` | Play a random album by that artist (radio off) |

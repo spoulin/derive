@@ -11,7 +11,7 @@ struct FollowedFan: Codable, Identifiable, Equatable {
     let location: String?
 
     static func avatarURL(imageID: Int?) -> URL? {
-        imageID.flatMap { URL(string: String(format: "https://f4.bcbits.com/img/%010d_21.jpg", $0)) }
+        imageID.flatMap { URL(string: String(format: "https://f4.bcbits.com/img/%010ld_21.jpg", $0)) }
     }
     var profileURL: URL { URL(string: "https://bandcamp.com/\(username)")! }
 }

@@ -5,7 +5,10 @@ import SwiftUI
 /// bio, shows, fan comments), their community page and their merch. On the right, your library:
 /// the artists to pick from, the tracks given a thumbs up or down, and the history.
 struct ArtistsView: View {
-    enum Tab: String { case artists, fans, likes, dislikes, history, artist, merch, community }
+    enum Tab: String { case artists, fans, likes, dislikes, history, styles, latest, artist, merch, community }
+    /// The right group of tabs: your library, or Bandcamp's new releases. It follows the New
+    /// Releases mode, chosen at the top right of the panel; the left group (the album playing) stays.
+    enum PanelSection: String { case library, newReleases }
 
     @ObservedObject var store = ArtistStore.shared
     @ObservedObject var dislikes = DislikeStore.shared
@@ -24,6 +27,8 @@ struct ArtistsView: View {
     @State private var confirmUnlink = false
     @State private var showAdd = false
     @AppStorage("panelTab") private var tab = Tab.artists
+    private var section: PanelSection { player.newReleases ? .newReleases : .library }
+    @ObservedObject var newReleases = NewReleaseStore.shared
     /// The tab cycle of a new track, while it runs.
     @State private var tabCycle: Task<Void, Never>?
 
@@ -50,7 +55,7 @@ struct ArtistsView: View {
                 // lay them over each other).
                 VStack(alignment: .leading, spacing: 12) { tabContent }
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                    .id(tab)
+                    .id(shownTab)
                     .transition(.opacity)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -69,6 +74,9 @@ struct ArtistsView: View {
             if let page = player.pageURL { await info.load(page) }
         }
         .onChange(of: player.nowPlaying) { _ in startTabCycle() }
+        // A right tab of the other section: open this section's first tab instead.
+        .onChange(of: section) { _ in fitTabToSection() }
+        .onAppear { fitTabToSection() }
     }
 
     /// How the tabs show their numbers: in full, in full but closer together, short (1.2K) and
@@ -87,18 +95,42 @@ struct ArtistsView: View {
             }
             Spacer()
             tabGroup {
-                tabButton(.artists, symbol: "person.2", counts: style, count: store.artists.count,
-                          name: "Your artists")
-                tabButton(.fans, symbol: "person.crop.circle", counts: style, count: fans.fans.count,
-                          name: "Fans you follow")
-                tabButton(.likes, symbol: "hand.thumbsup", counts: style, count: likes.tracks.count,
-                          name: "Your thumbs up")
-                tabButton(.dislikes, symbol: "hand.thumbsdown", counts: style, count: dislikes.tracks.count,
-                          name: "Your thumbs down")
-                tabButton(.history, symbol: "clock.arrow.circlepath", counts: style, count: history.playedToday,
-                          name: "History · \(history.playedToday) tracks played today")
+                switch section {
+                case .library:
+                    tabButton(.artists, symbol: "person.2", counts: style, count: store.artists.count,
+                              name: "Your artists")
+                    tabButton(.fans, symbol: "person.crop.circle", counts: style, count: fans.fans.count,
+                              name: "Fans you follow")
+                    tabButton(.likes, symbol: "hand.thumbsup", counts: style, count: likes.tracks.count,
+                              name: "Your thumbs up")
+                    tabButton(.dislikes, symbol: "hand.thumbsdown", counts: style, count: dislikes.tracks.count,
+                              name: "Your thumbs down")
+                    tabButton(.history, symbol: "clock.arrow.circlepath", counts: style, count: history.playedToday,
+                              name: "History · \(history.playedToday) tracks played today")
+                case .newReleases:
+                    tabButton(.styles, symbol: "tag", counts: style,
+                              count: newReleases.tags.isEmpty ? nil : newReleases.tags.count,
+                              name: "Styles of the new releases")
+                    tabButton(.latest, symbol: "sparkles", counts: style,
+                              count: newReleases.releases.isEmpty ? nil : newReleases.releases.count,
+                              name: "Latest releases on Bandcamp")
+                }
             }
         }
+    }
+
+    /// The tab shown: the one chosen, unless it belongs to the other section (Library or New
+    /// Releases), then that section's first tab: Artists, or Latest.
+    private var shownTab: Tab {
+        switch section {
+        case .library where [.styles, .latest].contains(tab): .artists
+        case .newReleases where [.artists, .fans, .likes, .dislikes, .history].contains(tab): .latest
+        default: tab
+        }
+    }
+
+    private func fitTabToSection() {
+        if shownTab != tab { tab = shownTab }
     }
 
     /// Upcoming shows of the artist playing, when there are any.
@@ -109,12 +141,14 @@ struct ArtistsView: View {
     }
 
     @ViewBuilder private var tabContent: some View {
-        switch tab {
+        switch shownTab {
         case .artists: artistsTab
         case .dislikes: dislikesTab
         case .history: HistoryView()
         case .likes: LikedView()
         case .fans: FansView()
+        case .styles: NewReleasesView(part: .styles)
+        case .latest: NewReleasesView(part: .latest)
         case .artist: ArtistInfoView()
         case .merch: MerchView()
         case .community: CommunityView()
@@ -206,7 +240,7 @@ struct ArtistsView: View {
 
     private func tabButton(_ value: Tab, symbol: String, counts style: CountStyle, count: Int?,
                            name: String) -> some View {
-        let selected = tab == value
+        let selected = shownTab == value
         let shown: String? = count.flatMap { count in
             switch style {
             case .full, .tight: count.formatted()

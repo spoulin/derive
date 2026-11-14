@@ -37,7 +37,7 @@ enum FanCollection {
         let name = (fan["name"] as? String).flatMap { $0.isEmpty ? nil : $0 } ?? username
         let photoID = ((fan["photo"] as? [String: Any])?["image_id"] as? NSNumber)?.intValue
             ?? (fan["photo"] as? NSNumber)?.intValue
-        let photo = photoID.flatMap { URL(string: String(format: "https://f4.bcbits.com/img/%010d_21.jpg", $0)) }
+        let photo = photoID.flatMap { URL(string: String(format: "https://f4.bcbits.com/img/%010ld_21.jpg", $0)) }
         return Page(fanID: fanID, name: name, photoURL: photo,
                     total: (collection?["item_count"] as? NSNumber)?.intValue ?? cached.count,
                     items: cached.compactMap(item),

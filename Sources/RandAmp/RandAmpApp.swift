@@ -42,6 +42,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             add("Radio", checked: player.radio) { player.radio.toggle() }
             add("Favorites", checked: player.favoritesOnly) { player.favoritesOnly.toggle() }
             add("Fans Mix", checked: player.fansMix) { player.fansMix.toggle() }
+            add("New Releases", checked: player.newReleases) { player.newReleases.toggle() }
             return menu
         }
     }
@@ -73,6 +74,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 case "favorites": player.favoritesOnly.toggle()
                 case "fansmix": player.fansMix.toggle()
                 case "randomfan": player.shuffleRandomFan()
+                case "newreleases": player.newReleases.toggle()
                 case "signin": BandcampSession.shared.signIn()
                 case "collection":
                     // randamp://collection?user=name shuffles in that fan's collection;
@@ -200,6 +202,7 @@ struct RandAmpCommands: Commands {
             Toggle("Radio", isOn: $player.radio)
             Toggle("Favorites", isOn: $player.favoritesOnly)
             Toggle("Fans Mix", isOn: $player.fansMix)
+            Toggle("New Releases", isOn: $player.newReleases)
             Divider()
             Button("Show or Hide Side Panel") { PlayerWindow.toggleArtists() }
                 .keyboardShortcut("s", modifiers: [.command, .option])

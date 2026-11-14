@@ -16,7 +16,7 @@ struct MerchItem: Identifiable, Equatable {
 
     /// Bandcamp image sizes: 16 is 700 px wide, 37 about 300 px.
     func imageURL(size: Int) -> URL? {
-        imageID.flatMap { URL(string: String(format: "https://f4.bcbits.com/img/%010d_%d.jpg", $0, size)) }
+        imageID.flatMap { URL(string: String(format: "https://f4.bcbits.com/img/%010ld_%d.jpg", $0, size)) }
     }
 }
 
