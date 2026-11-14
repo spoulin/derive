@@ -36,28 +36,12 @@ struct ArtistsView: View {
             // (the artists to pick from and the thumbs down). Icons and counts keep the bar
             // short; the names are in the tooltips. A segmented Picker drops an icon mixed with
             // text, so each group is a row of buttons styled like one.
-            HStack {
-                tabGroup {
-                    tabButton(.artist, symbol: "info.circle", count: showCount,
-                              name: showCount.map { "Artist playing · \($0) upcoming shows" } ?? "Artist playing")
-                    tabButton(.community, symbol: "bubble.left.and.bubble.right", count: communityPosts,
-                              name: communityPosts.map { "Community of the artist playing · \($0) posts" }
-                                  ?? "Community of the artist playing")
-                    tabButton(.merch, symbol: "cart", count: merchCount, name: "Merch of the artist playing")
-                }
-                Spacer()
-                tabGroup {
-                    tabButton(.artists, symbol: "person.2", count: store.artists.count,
-                              name: "Your artists")
-                    tabButton(.fans, symbol: "person.crop.circle", count: fans.fans.count,
-                              name: "Fans you follow")
-                    tabButton(.likes, symbol: "hand.thumbsup", count: likes.tracks.count,
-                              name: "Your thumbs up")
-                    tabButton(.dislikes, symbol: "hand.thumbsdown", count: dislikes.tracks.count,
-                              name: "Your thumbs down")
-                    tabButton(.history, symbol: "clock.arrow.circlepath", count: history.playedToday,
-                              name: "History · \(history.playedToday) tracks played today")
-                }
+            // With big numbers, the bar would run past the panel: the first form that fits wins.
+            ViewThatFits(in: .horizontal) {
+                tabBar(.full)
+                tabBar(.tight)
+                tabBar(.short)
+                tabBar(.openTabOnly)
             }
 
             // A ZStack, so a tab changed by the cycle fades into the next one.
@@ -85,6 +69,36 @@ struct ArtistsView: View {
             if let page = player.pageURL { await info.load(page) }
         }
         .onChange(of: player.nowPlaying) { _ in startTabCycle() }
+    }
+
+    /// How the tabs show their numbers: in full, in full but closer together, short (1.2K) and
+    /// close together, or only on the tab open.
+    enum CountStyle { case full, tight, short, openTabOnly }
+
+    private func tabBar(_ style: CountStyle) -> some View {
+        HStack {
+            tabGroup {
+                tabButton(.artist, symbol: "info.circle", counts: style, count: showCount,
+                          name: showCount.map { "Artist playing · \($0) upcoming shows" } ?? "Artist playing")
+                tabButton(.community, symbol: "bubble.left.and.bubble.right", counts: style, count: communityPosts,
+                          name: communityPosts.map { "Community of the artist playing · \($0) posts" }
+                              ?? "Community of the artist playing")
+                tabButton(.merch, symbol: "cart", counts: style, count: merchCount, name: "Merch of the artist playing")
+            }
+            Spacer()
+            tabGroup {
+                tabButton(.artists, symbol: "person.2", counts: style, count: store.artists.count,
+                          name: "Your artists")
+                tabButton(.fans, symbol: "person.crop.circle", counts: style, count: fans.fans.count,
+                          name: "Fans you follow")
+                tabButton(.likes, symbol: "hand.thumbsup", counts: style, count: likes.tracks.count,
+                          name: "Your thumbs up")
+                tabButton(.dislikes, symbol: "hand.thumbsdown", counts: style, count: dislikes.tracks.count,
+                          name: "Your thumbs down")
+                tabButton(.history, symbol: "clock.arrow.circlepath", counts: style, count: history.playedToday,
+                          name: "History · \(history.playedToday) tracks played today")
+            }
+        }
     }
 
     /// Upcoming shows of the artist playing, when there are any.
@@ -190,30 +204,39 @@ struct ArtistsView: View {
             .background(.quaternary, in: RoundedRectangle(cornerRadius: 7))
     }
 
-    private func tabButton(_ value: Tab, symbol: String, count: Int?, name: String) -> some View {
+    private func tabButton(_ value: Tab, symbol: String, counts style: CountStyle, count: Int?,
+                           name: String) -> some View {
         let selected = tab == value
+        let shown: String? = count.flatMap { count in
+            switch style {
+            case .full, .tight: count.formatted()
+            case .short: count.formatted(.number.notation(.compactName))
+            case .openTabOnly: selected ? count.formatted(.number.notation(.compactName)) : nil
+            }
+        }
         return Button {
             // Choosing a tab yourself stops the cycle of the track playing.
             tabCycle?.cancel()
             tabCycle = nil
             tab = value
         } label: {
-            HStack(spacing: 4) {
+            HStack(spacing: style == .full ? 4 : 3) {
                 Image(systemName: symbol)
-                if let count { Text("\(count)").monospacedDigit() }
+                if let shown { Text(shown).monospacedDigit() }
             }
             .font(.callout.weight(selected ? .semibold : .regular))
             // One line, whatever the room: with seven tabs, a count must never wrap.
             .lineLimit(1)
             .fixedSize()
             .foregroundStyle(selected ? .white : .secondary)
-            .padding(.horizontal, 8)
+            .padding(.horizontal, style == .full ? 8 : 5)
             .padding(.vertical, 4)
             .background(selected ? Color.accentColor : .clear, in: RoundedRectangle(cornerRadius: 5))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .help(name)
+        // A number the tab doesn't show in full is in its tooltip (some names already say it).
+        .help(style == .full || name.contains("·") ? name : count.map { "\(name) · \($0.formatted())" } ?? name)
         .accessibilityLabel(count.map { "\(name), \($0)" } ?? name)
         .accessibilityAddTraits(selected ? .isSelected : [])
     }
