@@ -234,14 +234,14 @@ final class Player: ObservableObject {
     }
 
     /// Plays one release from its first track (skipping thumbs down), and turns radio mode off so
-    /// the whole release plays. Used by the Community tab's new releases, and by the New tab, which
-    /// keeps the New Releases mode on: another new release follows.
-    func playAlbum(at url: URL, by artist: Artist, keepNewReleases: Bool = false) {
-        guest.leave()
+    /// the whole release plays. Used by the Community tab's new releases and the Latest tab.
+    /// It doesn't change where the music comes from: in New Releases, the Fans mix or someone's
+    /// collection, the next album comes from there again. Only Favorites, which picks one track at
+    /// a time, is turned off.
+    func playAlbum(at url: URL, by artist: Artist) {
         radio = false
         favoritesOnly = false
-        fansMix = false
-        if !keepNewReleases { newReleases = false }
+        if fansMix { mixFan = nil }
         player.pause()
         Task {
             guard !isLoading else { return }

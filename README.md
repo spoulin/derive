@@ -262,7 +262,8 @@ Click a supporter to shuffle in their collection (see [Someone else's collection
 right-click one to open their Bandcamp page.
 
 Click the cover of a new release (a play glyph shows on hover) to play it in RandAmp, from its first track; radio mode turns off
-so the whole release plays.
+so the whole release plays. Where the music comes from doesn't change: in New releases, the Fans
+mix or someone's collection, the next album comes from there again.
 
 Bandcamp shows the text of the artist's messages only to followers signed in on Bandcamp.
 Signed out, these messages are gathered in one line at the top of the posts: how many there are
@@ -320,8 +321,8 @@ off, whole albums of their collection, one after the other. **Favorites** leaves
 to play your thumbs up.
 
 Click × in that line to return to your artists: the music stops, and Play picks
-from your artists again. Playing an artist from your list, a new release from Community, or turning on Favorites
-also brings you back. The collection isn't kept: at launch, RandAmp is back with your artists.
+from your artists again. Playing an artist from your list, or turning on Favorites, also brings
+you back. A new release played from Community doesn't: it plays, then the collection goes on. The collection isn't kept: at launch, RandAmp is back with your artists.
 
 ## Fans you follow
 
@@ -347,7 +348,7 @@ In the Fans tab:
   collection the album comes from (click it to open the Fans tab); its × turns the mix off and
   stops the music. Radio works in the mix too. Fans mix is also in the "…"
   menu, and stays on from one launch to the next. Favorites, someone's collection, or playing an
-  artist or a new release turns it off.
+  artist turns it off; a new release played from Community plays, then the mix goes on.
 - Right-click a fan to open their Bandcamp page or unfollow them.
 
 ## New releases
@@ -374,7 +375,8 @@ also in a "…" menu, the Playback menu and the Dock menu.
   release from its first track; another new release follows.
 - A line in the middle of the player's footer shows the styles while the mode is on: click it to
   open Styles, or its × to go back to your artists, like **Library**. Favorites, Fans
-  mix, someone's collection, or playing an artist turns it off too.
+  mix, someone's collection, or playing an artist turns it off too. A release played from
+  Community or Latest doesn't: it plays to the end, then another new release follows.
 
 The list comes from the endpoint Bandcamp's Discover page loads its results from. It isn't a
 documented API: Bandcamp may change it, and the mode would then stop working.

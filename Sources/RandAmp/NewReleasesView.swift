@@ -170,7 +170,7 @@ struct NewReleasesView: View {
     private func play(_ release: NewRelease) {
         let artist = ArtistStore.shared.artists.first { $0.url.host == release.site.host }
             ?? Artist(url: release.site, name: release.artist)
-        player.playAlbum(at: release.url, by: artist, keepNewReleases: true)
+        player.playAlbum(at: release.url, by: artist)
     }
 
     private func add() {
