@@ -366,8 +366,10 @@ also in a "…" menu, the Playback menu and the Dock menu.
 - Each album is picked at random among the 100 latest added in those styles, skipping what you
   heard lately. Radio works too: a random track of a new release after each track.
 - **Styles**: type any Bandcamp tag in the field (shoegaze, dub techno…), or click one of the
-  suggestions: **From the album playing** (its tags, as on its Bandcamp page: hear something you
-  like, add its style), **Recent** (the last styles you added), and Bandcamp's main **Genres**. Places are tags too: montreal, berlin. Each style added narrows the list: releases
+  suggestions, each group in alphabetical order: **Subgenres** of each genre chosen (the ones
+  Bandcamp Discover suggests: blues gives delta blues, electric blues, boogie-woogie…), **From
+  the album playing** (its tags, as on its Bandcamp page: hear something you like, add its
+  style), **Recent** (the last styles you added), and Bandcamp's main **Genres**. Places are tags too: montreal, berlin. Each style added narrows the list: releases
   with all of them (ambient + drone, ambient + montreal). RandAmp checks with Bandcamp before
   adding a style, and says how many releases have them. No style: everything new on Bandcamp.
 - **Latest** lists those releases, newest added first, with the release date the artist

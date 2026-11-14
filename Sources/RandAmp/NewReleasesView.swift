@@ -94,6 +94,10 @@ struct NewReleasesView: View {
             }
             Text("Each style added narrows the list: releases with all of them.")
                 .font(.caption).foregroundStyle(.secondary)
+            // The subgenres Bandcamp suggests for each genre chosen, as on its Discover page.
+            ForEach(store.tags.filter { NewReleaseStore.subgenres[$0] != nil }, id: \.self) { genre in
+                suggestions("Subgenres of \(genre)", NewReleaseStore.subgenres[genre] ?? [])
+            }
             suggestions("From the album playing", playingTags)
             suggestions("Recent", store.recentTags)
             suggestions("Genres", NewReleaseStore.genres)
@@ -113,7 +117,7 @@ struct NewReleasesView: View {
         let available = tags.filter { !store.tags.contains($0) }
             .sorted { $0.localizedStandardCompare($1) == .orderedAscending }
         if !available.isEmpty {
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 6) {
                 Text(title).font(.caption.weight(.semibold)).foregroundStyle(.secondary)
                 FlowLayout {
                     ForEach(available, id: \.self) { tag in
@@ -124,6 +128,7 @@ struct NewReleasesView: View {
                     }
                 }
             }
+            .padding(.top, 10)
         }
     }
 
