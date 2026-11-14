@@ -372,6 +372,30 @@ enum PlayerWindow {
     private static var keepOnTopObserver: NSKeyValueObservation?
     static var isQuitting = false
 
+    /// "Show in Dock While Open": on by default. Off, RandAmp lives in the menu bar only.
+    static let dockKey = "showInDockWhileOpen"
+    static var showsInDock: Bool {
+        get { UserDefaults.standard.object(forKey: dockKey) as? Bool ?? true }
+        set {
+            UserDefaults.standard.set(newValue, forKey: dockKey)
+            updateDockIcon()
+        }
+    }
+
+    /// In the Dock, ⌘-Tab and with its menus while the window is open (minimized included);
+    /// in the menu bar only once it's closed, or when the setting is off.
+    static func updateDockIcon(windowOpen: Bool? = nil) {
+        let open = windowOpen ?? (window?.isVisible == true || window?.isMiniaturized == true)
+        let policy: NSApplication.ActivationPolicy = open && showsInDock ? .regular : .accessory
+        guard NSApp.activationPolicy() != policy else { return }
+        NSApp.setActivationPolicy(policy)
+        if policy == .regular {
+            // Switching makes the app lose focus: bring the window back to the front.
+            NSApp.activate(ignoringOtherApps: true)
+            window?.makeKeyAndOrderFront(nil)
+        }
+    }
+
     static func show() {
         if window == nil {
             let host = NSHostingController(rootView: PlayerWindowContent())
@@ -404,6 +428,7 @@ enum PlayerWindow {
         UserDefaults.standard.set(true, forKey: openKey)
         NSApp.activate(ignoringOtherApps: true)
         window?.makeKeyAndOrderFront(nil)
+        updateDockIcon(windowOpen: true)
     }
 
     /// Reopens the window at launch when it was open when the app quit.
@@ -469,6 +494,7 @@ enum PlayerWindow {
                 // Quitting also closes the window: only a close by the user forgets it.
                 if !PlayerWindow.isQuitting {
                     UserDefaults.standard.set(false, forKey: PlayerWindow.openKey)
+                    PlayerWindow.updateDockIcon(windowOpen: false)
                 }
             }
         }

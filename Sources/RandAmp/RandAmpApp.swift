@@ -2,6 +2,7 @@ import SwiftUI
 
 /// Handles randamp:// URLs (e.g. from a Stream Deck) and reopens the player window at launch.
 /// derive:// and sonnov:// still work, from when the app was called Dérive, then Sonnov.
+@MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         Task { @MainActor in
@@ -10,6 +11,38 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             // Picks up artists followed or unfollowed on Bandcamp since the last launch.
             await ArtistStore.shared.refresh()
             await FollowedFanStore.shared.refresh()
+        }
+    }
+
+    /// A click on the Dock icon brings the player window back.
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        PlayerWindow.show()
+        return true
+    }
+
+    /// Right-click on the Dock icon: the main controls.
+    func applicationDockMenu(_ sender: NSApplication) -> NSMenu? {
+        do {
+            let player = Player.shared
+            let menu = NSMenu()
+            func add(_ title: String, checked: Bool = false, enabled: Bool = true, _ action: @escaping @MainActor () -> Void) {
+                let item = DockMenuItem(title: title, action: action)
+                item.state = checked ? .on : .off
+                item.isEnabled = enabled
+                menu.addItem(item)
+            }
+            let playing = player.nowPlaying != nil
+            add(player.isPlaying ? "Pause" : "Play") { player.toggle() }
+            add("Next Track", enabled: playing) { player.nextTrack() }
+            add("New Random Album") { player.nextAlbum() }
+            menu.addItem(.separator())
+            add("Thumbs Up", enabled: playing) { player.likeCurrent() }
+            add("Thumbs Down", enabled: playing) { player.dislikeCurrent() }
+            menu.addItem(.separator())
+            add("Radio", checked: player.radio) { player.radio.toggle() }
+            add("Favorites", checked: player.favoritesOnly) { player.favoritesOnly.toggle() }
+            add("Fans Mix", checked: player.fansMix) { player.fansMix.toggle() }
+            return menu
         }
     }
 
@@ -82,6 +115,8 @@ struct RandAmpApp: App {
             Image(systemName: player.isPlaying ? "waveform" : "play.fill")
         }
         .menuBarExtraStyle(.window)
+        // The menus at the top of the screen, while the player window is open.
+        .commands { RandAmpCommands() }
     }
 }
 
@@ -118,6 +153,56 @@ enum SettingsMigration {
             let new = library.appendingPathComponent(folder).appendingPathComponent(newID + suffix)
             guard files.fileExists(atPath: old.path), !files.fileExists(atPath: new.path) else { continue }
             try? files.copyItem(at: old, to: new)
+        }
+    }
+}
+
+/// A Dock menu item that runs a closure.
+private final class DockMenuItem: NSMenuItem {
+    private let run: @MainActor () -> Void
+
+    init(title: String, action: @escaping @MainActor () -> Void) {
+        run = action
+        super.init(title: title, action: #selector(fire), keyEquivalent: "")
+        target = self
+    }
+
+    required init(coder: NSCoder) { fatalError("Not used") }
+
+    @objc private func fire() { MainActor.assumeIsolated { run() } }
+}
+
+/// The app's menus, shown while it's in the Dock: Check for Updates in the RandAmp menu, and a
+/// Playback menu with the player's controls.
+struct RandAmpCommands: Commands {
+    @ObservedObject private var player = Player.shared
+
+    var body: some Commands {
+        CommandGroup(after: .appInfo) {
+            Button("Check for Updates…") { NSWorkspace.shared.open(AppInfo.releasesPage) }
+        }
+        CommandMenu("Playback") {
+            Button(player.isPlaying ? "Pause" : "Play") { player.toggle() }
+                .keyboardShortcut("p", modifiers: [.command, .option])
+            Button("Next Track") { player.nextTrack() }
+                .keyboardShortcut(.rightArrow, modifiers: .command)
+                .disabled(player.nowPlaying == nil)
+            Button("New Random Album") { player.nextAlbum() }
+                .keyboardShortcut("r", modifiers: .command)
+            Divider()
+            Button("Thumbs Up") { player.likeCurrent() }
+                .keyboardShortcut(.upArrow, modifiers: .command)
+                .disabled(player.nowPlaying == nil)
+            Button("Thumbs Down") { player.dislikeCurrent() }
+                .keyboardShortcut(.downArrow, modifiers: .command)
+                .disabled(player.nowPlaying == nil)
+            Divider()
+            Toggle("Radio", isOn: $player.radio)
+            Toggle("Favorites", isOn: $player.favoritesOnly)
+            Toggle("Fans Mix", isOn: $player.fansMix)
+            Divider()
+            Button("Show or Hide Side Panel") { PlayerWindow.toggleArtists() }
+                .keyboardShortcut("s", modifiers: [.command, .option])
         }
     }
 }

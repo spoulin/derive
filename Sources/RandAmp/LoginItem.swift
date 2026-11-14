@@ -39,6 +39,10 @@ struct AppMenu: View {
             Toggle("Radio", isOn: $player.radio)
                 .disabled(player.favoritesOnly)
             Divider()
+            Toggle("Show in Dock While Open", isOn: Binding(
+                get: { PlayerWindow.showsInDock },
+                set: { PlayerWindow.showsInDock = $0 }
+            ))
             Toggle("Open at Login", isOn: Binding(
                 get: { openAtLogin },
                 set: { newValue in

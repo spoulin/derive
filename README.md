@@ -59,7 +59,8 @@ RandAmp was called Dérive until version 1.0.
    and start over at step 3.
 
 That's needed once only: afterwards, RandAmp opens like any other app, at login too. RandAmp lives
-in the menu bar: look for its icon at the top right of the screen.
+in the menu bar: look for its icon at the top right of the screen. While its player window is
+open, it's in the Dock too (see [Player window](#player-window)).
 
 To update, choose **Check for Updates…** in a "…" menu: it opens the page of the latest version.
 Download it and drag it onto Applications again, replacing the old one. Your artists and settings
@@ -366,6 +367,21 @@ left on the right. Click or drag the bar to move in the track. Control Center's 
 track too.
 
 The window keeps its place and size, and comes back at launch if it was open when you quit.
+
+### In the Dock while the window is open
+
+While the player window is open (or minimized), RandAmp is a regular app: its icon is in the Dock
+and in ⌘-Tab, and the menus at the top of the screen are its own. Close the window and the icon
+leaves the Dock; the music goes on, and the menu bar icon stays.
+
+- Click the Dock icon to bring the window back.
+- Right-click it for the controls: Play/Pause, Next Track, New Random Album, Thumbs Up, Thumbs
+  Down, Radio, Favorites, Fans Mix.
+- The **RandAmp** menu has Check for Updates. The **Playback** menu has the same controls, with
+  shortcuts: ⌥⌘P play/pause, ⌘→ next track, ⌘R new random album, ⌘↑ thumbs up, ⌘↓ thumbs
+  down, ⌥⌘S side panel.
+
+To keep RandAmp in the menu bar only, turn off **Show in Dock While Open** in a "…" menu.
 
 A short message at the bottom of the player says what an action just did: favorites or radio on
 or off, on top or not, thumbs up or down. It fades out after a few seconds.
